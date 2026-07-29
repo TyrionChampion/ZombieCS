@@ -187,6 +187,23 @@ func _ready() -> void:
 				(world.get_node("CanvasLayer/HUD/DamageIndicator") as Control).visible,
 				"Zombie damage direction indicator did not appear"
 			)
+			var alive_zombie_ids: Array[int] = []
+			for node: Node in world.get_tree().get_nodes_in_group("players"):
+				if bool(node.get("is_zombie")) and bool(node.get("is_alive")):
+					alive_zombie_ids.append(int(node.get("peer_id")))
+			for zombie_id: int in alive_zombie_ids:
+				GameManager.call("_kill_zombie", zombie_id)
+			_check(GameManager.state == GameManager.GameState.GAME_OVER, "Eliminating all zombies did not end the round")
+			_check(
+				(world.get_node("CanvasLayer/HUD/GameOverPanel") as Panel).visible,
+				"Human victory panel did not appear"
+			)
+			_check(
+				"所有僵尸已被消灭" in (world.get_node("CanvasLayer/HUD/GameOverPanel/GameOverLabel") as Label).text,
+				"Human victory message does not explain that all zombies were eliminated"
+			)
+			await get_tree().create_timer(GameManager.NEXT_ROUND_DELAY_SECONDS + 0.2).timeout
+			_check(GameManager.state == GameManager.GameState.COUNTDOWN, "Next round did not start automatically")
 
 	NetworkManager.leave_game()
 	if failures.is_empty():

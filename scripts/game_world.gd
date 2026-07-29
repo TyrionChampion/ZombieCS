@@ -447,9 +447,9 @@ func _on_game_over(winner: String) -> void:
 	game_over_panel.visible = true
 	restart_button.visible = NetworkManager.is_host
 	if winner == "humans":
-		game_over_label.text = "🎉 人类胜利！\n成功坚持到回合结束"
+		game_over_label.text = "🎉 人类胜利！\n所有僵尸已被消灭\n4 秒后开始下一轮"
 	else:
-		game_over_label.text = "💀 僵尸胜利！\n所有人类都已被感染"
+		game_over_label.text = "💀 僵尸胜利！\n所有人类都已被感染\n4 秒后开始下一轮"
 
 
 func _on_restart_pressed() -> void:

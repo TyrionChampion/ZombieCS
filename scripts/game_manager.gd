@@ -20,8 +20,8 @@ const ROUND_SECONDS := 240.0
 const HUMAN_HEALTH := 100.0
 const ZOMBIE_HEALTH := 1600.0
 const ZOMBIE_RESPAWN_SECONDS := 2.0
-const LAST_ZOMBIE_RESPAWN_SECONDS := 0.35
 const ZOMBIE_SPAWN_PROTECTION_SECONDS := 3.0
+const NEXT_ROUND_DELAY_SECONDS := 4.0
 
 var state: GameState = GameState.WAITING
 var countdown_timer := COUNTDOWN_SECONDS
@@ -260,12 +260,10 @@ func _kill_zombie(peer_id: int) -> void:
 	info["alive"] = false
 	NetworkManager.update_player_info(peer_id, info)
 	rpc("_sync_player_died", peer_id)
-	var respawn_delay := (
-		LAST_ZOMBIE_RESPAWN_SECONDS
-		if NetworkManager.get_alive_zombies_count() == 0
-		else ZOMBIE_RESPAWN_SECONDS
-	)
-	_respawn_zombie_after_delay(peer_id, respawn_delay)
+	if NetworkManager.get_zombie_count() == 0:
+		_end_game("humans")
+		return
+	_respawn_zombie_after_delay(peer_id, ZOMBIE_RESPAWN_SECONDS)
 
 
 func _respawn_zombie_after_delay(peer_id: int, delay: float) -> void:
@@ -293,6 +291,13 @@ func _end_game(winner: String) -> void:
 		return
 	_set_state_server(GameState.GAME_OVER)
 	rpc("_sync_game_over", winner)
+	_start_next_round_after_delay()
+
+
+func _start_next_round_after_delay() -> void:
+	await get_tree().create_timer(NEXT_ROUND_DELAY_SECONDS).timeout
+	if multiplayer.multiplayer_peer != null and multiplayer.is_server() and state == GameState.GAME_OVER:
+		start_game()
 
 
 func _set_state_server(new_state: GameState) -> void:
