@@ -1,0 +1,132 @@
+[gd_scene format=3 uid="uid://dplayer00001"]
+
+[ext_resource type="Script" path="res://scripts/player_controller.gd" id="1_player"]
+[ext_resource type="Script" path="res://scripts/weapon_system.gd" id="2_weapon"]
+[ext_resource type="Script" path="res://scripts/bot_controller.gd" id="3_bot"]
+
+[sub_resource type="CapsuleShape3D" id="CapsuleShape_1"]
+radius = 0.5
+height = 1.8
+
+[sub_resource type="CapsuleMesh" id="CapsuleMesh_human"]
+radius = 0.5
+height = 1.8
+
+[sub_resource type="StandardMaterial3D" id="Material_human"]
+albedo_color = Color(0.2, 0.5, 0.8, 1)
+
+[sub_resource type="CapsuleMesh" id="CapsuleMesh_zombie"]
+radius = 0.5
+height = 1.8
+
+[sub_resource type="StandardMaterial3D" id="Material_zombie"]
+albedo_color = Color(0.8, 0.2, 0.2, 1)
+
+[sub_resource type="StandardMaterial3D" id="Material_flash"]
+albedo_color = Color(1, 0.9, 0.2, 1)
+emission_enabled = true
+emission = Color(1, 0.8, 0.1, 1)
+
+[sub_resource type="SphereMesh" id="SphereMesh_flash"]
+radius = 0.08
+height = 0.16
+
+[sub_resource type="StandardMaterial3D" id="Material_gun"]
+albedo_color = Color(0.15, 0.15, 0.15, 1)
+metallic = 0.8
+roughness = 0.3
+
+[sub_resource type="StandardMaterial3D" id="Material_skin"]
+albedo_color = Color(0.72, 0.48, 0.32, 1)
+roughness = 0.82
+
+[node name="Player" type="CharacterBody3D"]
+script = ExtResource("1_player")
+
+[node name="BotController" type="Node" parent="."]
+script = ExtResource("3_bot")
+
+[node name="NavigationAgent3D" type="NavigationAgent3D" parent="."]
+path_desired_distance = 0.7
+target_desired_distance = 1.4
+radius = 0.55
+height = 1.8
+path_max_distance = 3.5
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+shape = SubResource("CapsuleShape_1")
+
+[node name="Head" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.6, 0)
+
+[node name="Camera3D" type="Camera3D" parent="Head"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.1, 0)
+current = false
+
+[node name="AttackRay" type="RayCast3D" parent="Head"]
+target_position = Vector3(0, 0, -2.5)
+collision_mask = 1
+
+[node name="ShootRay" type="RayCast3D" parent="Head"]
+target_position = Vector3(0, 0, -100)
+collision_mask = 1
+
+[node name="WeaponSystem" type="Node3D" parent="Head"]
+script = ExtResource("2_weapon")
+
+[node name="FirePoint" type="Marker3D" parent="Head/WeaponSystem"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.2, -0.15, -0.5)
+
+[node name="MuzzleFlash" type="MeshInstance3D" parent="Head/WeaponSystem"]
+transform = Transform3D(0.08, 0, 0, 0, 0.08, 0, 0, 0, 1, 0.2, -0.15, -0.6)
+visible = false
+mesh = SubResource("SphereMesh_flash")
+surface_material_override/0 = SubResource("Material_flash")
+
+[node name="FireSound" type="AudioStreamPlayer3D" parent="Head/WeaponSystem"]
+bus = &"SFX"
+[node name="ReloadSound" type="AudioStreamPlayer3D" parent="Head/WeaponSystem"]
+bus = &"SFX"
+
+[node name="GunModel" type="Node3D" parent="Head/WeaponSystem"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.15, -0.2, -0.4)
+
+[node name="GunBody" type="CSGBox3D" parent="Head/WeaponSystem/GunModel"]
+size = Vector3(0.12, 0.12, 0.5)
+use_collision = false
+material = SubResource("Material_gun")
+[node name="GunBarrel" type="CSGBox3D" parent="Head/WeaponSystem/GunModel"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.01, -0.25)
+size = Vector3(0.06, 0.07, 0.35)
+use_collision = false
+material = SubResource("Material_gun")
+[node name="GunGrip" type="CSGBox3D" parent="Head/WeaponSystem/GunModel"]
+transform = Transform3D(1, 0, 0, 0, 0.7, -0.7, 0, 0.7, 0.7, 0, -0.07, 0.15)
+size = Vector3(0.09, 0.2, 0.07)
+use_collision = false
+material = SubResource("Material_gun")
+
+[node name="RightArm" type="CSGBox3D" parent="Head/WeaponSystem/GunModel"]
+position = Vector3(0.11, -0.12, 0.18)
+rotation_degrees = Vector3(-18, 0, -8)
+size = Vector3(0.11, 0.11, 0.42)
+use_collision = false
+material = SubResource("Material_skin")
+
+[node name="LeftArm" type="CSGBox3D" parent="Head/WeaponSystem/GunModel"]
+position = Vector3(-0.08, -0.1, -0.08)
+rotation_degrees = Vector3(-8, 0, 14)
+size = Vector3(0.1, 0.1, 0.34)
+use_collision = false
+material = SubResource("Material_skin")
+
+[node name="BodyMesh" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.9, 0)
+mesh = SubResource("CapsuleMesh_human")
+surface_material_override/0 = SubResource("Material_human")
+
+[node name="ZombieMesh" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.9, 0)
+mesh = SubResource("CapsuleMesh_zombie")
+surface_material_override/0 = SubResource("Material_zombie")
+visible = false

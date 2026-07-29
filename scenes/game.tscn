@@ -1,0 +1,534 @@
+[gd_scene format=3 uid="uid://dgame000001"]
+
+[ext_resource type="Script" path="res://scripts/game_world.gd" id="1_game_world"]
+
+[sub_resource type="ProceduralSkyMaterial" id="SkyMaterial_dust"]
+sky_top_color = Color(0.16, 0.42, 0.72, 1)
+sky_horizon_color = Color(0.74, 0.84, 0.9, 1)
+ground_bottom_color = Color(0.16, 0.13, 0.1, 1)
+ground_horizon_color = Color(0.58, 0.48, 0.36, 1)
+sun_angle_max = 18.0
+sun_curve = 0.08
+
+[sub_resource type="Sky" id="Sky_dust"]
+sky_material = SubResource("SkyMaterial_dust")
+
+[sub_resource type="StandardMaterial3D" id="Mat_ground"]
+albedo_color = Color(0.62, 0.5, 0.34, 1)
+roughness = 0.92
+
+[sub_resource type="StandardMaterial3D" id="Mat_sandstone"]
+albedo_color = Color(0.78, 0.64, 0.43, 1)
+roughness = 0.86
+
+[sub_resource type="StandardMaterial3D" id="Mat_plaster"]
+albedo_color = Color(0.82, 0.76, 0.63, 1)
+roughness = 0.9
+
+[sub_resource type="StandardMaterial3D" id="Mat_crate"]
+albedo_color = Color(0.38, 0.22, 0.1, 1)
+roughness = 0.78
+
+[sub_resource type="StandardMaterial3D" id="Mat_metal"]
+albedo_color = Color(0.12, 0.22, 0.28, 1)
+metallic = 0.45
+roughness = 0.5
+
+[sub_resource type="StandardMaterial3D" id="Mat_accent"]
+albedo_color = Color(0.14, 0.32, 0.42, 1)
+roughness = 0.72
+
+[sub_resource type="StandardMaterial3D" id="Mat_site_a"]
+albedo_color = Color(0.72, 0.16, 0.1, 1)
+roughness = 0.72
+
+[sub_resource type="StandardMaterial3D" id="Mat_site_b"]
+albedo_color = Color(0.08, 0.34, 0.62, 1)
+roughness = 0.68
+
+[sub_resource type="NavigationMesh" id="NavigationMesh_dust"]
+agent_height = 1.8
+agent_radius = 0.55
+agent_max_climb = 0.55
+agent_max_slope = 46.0
+cell_size = 0.25
+cell_height = 0.25
+geometry_parsed_geometry_type = 1
+geometry_collision_mask = 1
+geometry_source_geometry_mode = 0
+region_min_size = 1.0
+
+[sub_resource type="Environment" id="Environment_1"]
+background_mode = 2
+sky = SubResource("Sky_dust")
+ambient_light_source = 3
+ambient_light_color = Color(0.82, 0.87, 0.94, 1)
+ambient_light_energy = 0.72
+ambient_light_sky_contribution = 1.0
+reflected_light_source = 2
+tonemap_mode = 2
+
+[node name="Game" type="Node3D"]
+script = ExtResource("1_game_world")
+
+[node name="NavigationRegion3D" type="NavigationRegion3D" parent="."]
+navigation_mesh = SubResource("NavigationMesh_dust")
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
+rotation_degrees = Vector3(-35, 45, 0)
+light_color = Color(1, 0.96, 0.88, 1)
+light_energy = 1.35
+shadow_enabled = true
+directional_shadow_max_distance = 80.0
+
+[node name="FillLight" type="DirectionalLight3D" parent="."]
+rotation_degrees = Vector3(45, -135, 0)
+light_color = Color(0.42, 0.58, 0.78, 1)
+light_energy = 0.22
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("Environment_1")
+
+[node name="Ground" type="CSGBox3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.5, 0)
+size = Vector3(50, 1, 50)
+use_collision = true
+material = SubResource("Mat_ground")
+
+[node name="Walls" type="Node3D" parent="."]
+[node name="WallNorth" type="CSGBox3D" parent="Walls"]
+transform = Transform3D(1, 0, 0, 0, 2, 0, 0, 0, 1, 0, 2, -25)
+size = Vector3(50, 4, 1)
+use_collision = true
+material = SubResource("Mat_sandstone")
+[node name="WallSouth" type="CSGBox3D" parent="Walls"]
+transform = Transform3D(1, 0, 0, 0, 2, 0, 0, 0, 1, 0, 2, 25)
+size = Vector3(50, 4, 1)
+use_collision = true
+material = SubResource("Mat_sandstone")
+[node name="WallEast" type="CSGBox3D" parent="Walls"]
+transform = Transform3D(1, 0, 0, 0, 2, 0, 0, 0, 1, 25, 2, 0)
+size = Vector3(1, 4, 50)
+use_collision = true
+material = SubResource("Mat_sandstone")
+[node name="WallWest" type="CSGBox3D" parent="Walls"]
+transform = Transform3D(1, 0, 0, 0, 2, 0, 0, 0, 1, -25, 2, 0)
+size = Vector3(1, 4, 50)
+use_collision = true
+material = SubResource("Mat_sandstone")
+
+[node name="SpawnPoints" type="Node3D" parent="."]
+[node name="Spawn1" type="Marker3D" parent="SpawnPoints"]
+position = Vector3(-15, 3, 20)
+[node name="Spawn2" type="Marker3D" parent="SpawnPoints"]
+position = Vector3(-10, 3, 22)
+[node name="Spawn3" type="Marker3D" parent="SpawnPoints"]
+position = Vector3(-18, 2, 16)
+[node name="Spawn4" type="Marker3D" parent="SpawnPoints"]
+position = Vector3(-5, 3, 18)
+[node name="Spawn5" type="Marker3D" parent="SpawnPoints"]
+position = Vector3(0, 2, -22)
+[node name="Spawn6" type="Marker3D" parent="SpawnPoints"]
+position = Vector3(5, 2, -22)
+[node name="Spawn7" type="Marker3D" parent="SpawnPoints"]
+position = Vector3(-5, 2, -20)
+[node name="Spawn8" type="Marker3D" parent="SpawnPoints"]
+position = Vector3(10, 2, -22)
+[node name="Spawn9" type="Marker3D" parent="SpawnPoints"]
+position = Vector3(0, 2, 0)
+[node name="Spawn10" type="Marker3D" parent="SpawnPoints"]
+position = Vector3(4, 2, 0)
+[node name="Spawn11" type="Marker3D" parent="SpawnPoints"]
+position = Vector3(-4, 2, 0)
+[node name="Spawn12" type="Marker3D" parent="SpawnPoints"]
+position = Vector3(2, 2, 5)
+[node name="Spawn13" type="Marker3D" parent="SpawnPoints"]
+position = Vector3(-2, 2, 5)
+[node name="Spawn14" type="Marker3D" parent="SpawnPoints"]
+position = Vector3(2, 2, -5)
+[node name="Spawn15" type="Marker3D" parent="SpawnPoints"]
+position = Vector3(-2, 2, -5)
+[node name="Spawn16" type="Marker3D" parent="SpawnPoints"]
+position = Vector3(15, 3, -16)
+[node name="Spawn17" type="Marker3D" parent="SpawnPoints"]
+position = Vector3(10, 3, -18)
+[node name="Spawn18" type="Marker3D" parent="SpawnPoints"]
+position = Vector3(18, 3, -12)
+[node name="Spawn19" type="Marker3D" parent="SpawnPoints"]
+position = Vector3(20, 2, -20)
+[node name="Spawn20" type="Marker3D" parent="SpawnPoints"]
+position = Vector3(-20, 2, 22)
+[node name="Spawn21" type="Marker3D" parent="SpawnPoints"]
+position = Vector3(-15, 2, 10)
+[node name="Spawn22" type="Marker3D" parent="SpawnPoints"]
+position = Vector3(15, 2, -6)
+[node name="Spawn23" type="Marker3D" parent="SpawnPoints"]
+position = Vector3(-18, 2, 10)
+[node name="Spawn24" type="Marker3D" parent="SpawnPoints"]
+position = Vector3(18, 2, 0)
+
+[node name="CanvasLayer" type="CanvasLayer" parent="."]
+[node name="HUD" type="Control" parent="CanvasLayer"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+[node name="CountdownLabel" type="Label" parent="CanvasLayer/HUD"]
+layout_mode = 1
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -150.0
+offset_top = 50.0
+offset_right = 150.0
+offset_bottom = 100.0
+grow_horizontal = 2
+horizontal_alignment = 1
+vertical_alignment = 1
+[node name="TimeLabel" type="Label" parent="CanvasLayer/HUD"]
+layout_mode = 1
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -200.0
+offset_top = 10.0
+offset_right = -10.0
+offset_bottom = 50.0
+grow_horizontal = 2
+horizontal_alignment = 2
+[node name="RoleLabel" type="Label" parent="CanvasLayer/HUD"]
+offset_left = 16.0
+offset_top = 14.0
+offset_right = 240.0
+offset_bottom = 44.0
+text = "阵营：人类"
+[node name="HealthLabel" type="Label" parent="CanvasLayer/HUD"]
+offset_left = 16.0
+offset_top = 46.0
+offset_right = 240.0
+offset_bottom = 76.0
+text = "生命：100 / 100"
+[node name="WeaponLabel" type="Label" parent="CanvasLayer/HUD"]
+layout_mode = 1
+anchors_preset = 3
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -220.0
+offset_top = -78.0
+offset_right = -16.0
+offset_bottom = -48.0
+grow_horizontal = 0
+grow_vertical = 0
+horizontal_alignment = 2
+[node name="AmmoLabel" type="Label" parent="CanvasLayer/HUD"]
+layout_mode = 1
+anchors_preset = 3
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -220.0
+offset_top = -46.0
+offset_right = -16.0
+offset_bottom = -16.0
+grow_horizontal = 0
+grow_vertical = 0
+text = "12 / 60"
+horizontal_alignment = 2
+[node name="Crosshair" type="Label" parent="CanvasLayer/HUD"]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -12.0
+offset_top = -16.0
+offset_right = 12.0
+offset_bottom = 16.0
+grow_horizontal = 2
+grow_vertical = 2
+text = "+"
+horizontal_alignment = 1
+vertical_alignment = 1
+[node name="NotificationLabel" type="Label" parent="CanvasLayer/HUD"]
+visible = false
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+offset_top = 100.0
+offset_bottom = 140.0
+grow_horizontal = 2
+horizontal_alignment = 1
+vertical_alignment = 1
+[node name="GameOverPanel" type="Panel" parent="CanvasLayer/HUD"]
+visible = false
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -200.0
+offset_top = -80.0
+offset_right = 200.0
+offset_bottom = 80.0
+grow_horizontal = 2
+grow_vertical = 2
+[node name="GameOverLabel" type="Label" parent="CanvasLayer/HUD/GameOverPanel"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+horizontal_alignment = 1
+vertical_alignment = 1
+[node name="RestartButton" type="Button" parent="CanvasLayer/HUD/GameOverPanel"]
+layout_mode = 1
+anchors_preset = 12
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = -40.0
+grow_horizontal = 2
+grow_vertical = 0
+text = "重新开始"
+
+[node name="Terrain" type="Node3D" parent="."]
+; === A 点 (西北) ===
+[node name="A_Plat" type="CSGBox3D" parent="Terrain"]
+size = Vector3(10, 1.5, 8)
+use_collision = true
+material = SubResource("Mat_plaster")
+transform = Transform3D(1,0,0,0,1,0,0,0,1,-10,1.5,18)
+[node name="A_Box1" type="CSGBox3D" parent="Terrain"]
+size = Vector3(1.5, 1.5, 1.5)
+use_collision = true
+material = SubResource("Mat_crate")
+transform = Transform3D(1,0,0,0,1,0,0,0,1,-14,1.5,20)
+[node name="A_Box2" type="CSGBox3D" parent="Terrain"]
+size = Vector3(1.5, 1.5, 1.5)
+use_collision = true
+material = SubResource("Mat_crate")
+transform = Transform3D(1,0,0,0,1,0,0,0,1,-6,1.5,15)
+; === B 点 (东南) ===
+[node name="B_Plat" type="CSGBox3D" parent="Terrain"]
+size = Vector3(8, 1.5, 8)
+use_collision = true
+material = SubResource("Mat_plaster")
+transform = Transform3D(1,0,0,0,1,0,0,0,1,14,1.5,-15)
+[node name="B_Box1" type="CSGBox3D" parent="Terrain"]
+size = Vector3(2, 1.5, 2)
+use_collision = true
+material = SubResource("Mat_crate")
+transform = Transform3D(1,0,0,0,1,0,0,0,1,17,1.5,-18)
+[node name="B_Box2" type="CSGBox3D" parent="Terrain"]
+size = Vector3(2, 1.5, 2)
+use_collision = true
+material = SubResource("Mat_crate")
+transform = Transform3D(1,0,0,0,1,0,0,0,1,11,1.5,-12)
+; === 中路走廊 ===
+[node name="Mid_Wall_W" type="CSGBox3D" parent="Terrain"]
+size = Vector3(0.5, 3, 14)
+use_collision = true
+material = SubResource("Mat_sandstone")
+transform = Transform3D(1,0,0,0,1,0,0,0,1,-3,1.5,2)
+[node name="Mid_Wall_E" type="CSGBox3D" parent="Terrain"]
+size = Vector3(0.5, 3, 14)
+use_collision = true
+material = SubResource("Mat_sandstone")
+transform = Transform3D(1,0,0,0,1,0,0,0,1,3,1.5,2)
+; === A 大道 ===
+[node name="A_Long_Wall" type="CSGBox3D" parent="Terrain"]
+size = Vector3(8, 2.5, 0.5)
+use_collision = true
+material = SubResource("Mat_sandstone")
+transform = Transform3D(1,0,0,0,1,0,0,0,1,-16,1.5,10)
+; === B 隧道 ===
+[node name="B_Tunnel_Wall" type="CSGBox3D" parent="Terrain"]
+size = Vector3(6, 2.5, 0.5)
+use_collision = true
+material = SubResource("Mat_sandstone")
+transform = Transform3D(1,0,0,0,1,0,0,0,1,16,1.5,-10)
+; === 出生点 ===
+[node name="CT_Spawn_Plat" type="CSGBox3D" parent="Terrain"]
+size = Vector3(4, 0.3, 4)
+use_collision = true
+material = SubResource("Mat_accent")
+transform = Transform3D(1,0,0,0,1,0,0,0,1,-15,0.3,22)
+[node name="T_Spawn_Plat" type="CSGBox3D" parent="Terrain"]
+size = Vector3(4, 0.3, 4)
+use_collision = true
+material = SubResource("Mat_accent")
+transform = Transform3D(1,0,0,0,1,0,0,0,1,0,0.3,-22)
+
+; === Dust2 风格扩建：中门、A 小道、A 大、B 洞与交叉火力区 ===
+[node name="MidDoorLeft" type="CSGBox3D" parent="Terrain"]
+position = Vector3(-1.35, 1.5, -5)
+size = Vector3(2.2, 3, 0.35)
+use_collision = true
+material = SubResource("Mat_metal")
+[node name="MidDoorRight" type="CSGBox3D" parent="Terrain"]
+position = Vector3(1.35, 1.5, -5)
+size = Vector3(2.2, 3, 0.35)
+use_collision = true
+material = SubResource("Mat_metal")
+
+[node name="CatwalkRamp" type="CSGBox3D" parent="Terrain"]
+position = Vector3(-6.5, 1.35, 7)
+rotation_degrees = Vector3(-9, 0, 0)
+size = Vector3(3.2, 0.55, 10)
+use_collision = true
+material = SubResource("Mat_plaster")
+[node name="CatwalkRail" type="CSGBox3D" parent="Terrain"]
+position = Vector3(-8.2, 2.1, 7)
+size = Vector3(0.35, 2.2, 10)
+use_collision = true
+material = SubResource("Mat_sandstone")
+
+[node name="ALongOuter" type="CSGBox3D" parent="Terrain"]
+position = Vector3(-21, 2, 1)
+size = Vector3(0.6, 4, 18)
+use_collision = true
+material = SubResource("Mat_sandstone")
+[node name="ALongInner" type="CSGBox3D" parent="Terrain"]
+position = Vector3(-15, 2, 1)
+size = Vector3(0.6, 4, 12)
+use_collision = true
+material = SubResource("Mat_plaster")
+[node name="ALongCorner" type="CSGBox3D" parent="Terrain"]
+position = Vector3(-18, 2, -8)
+size = Vector3(6.5, 4, 0.6)
+use_collision = true
+material = SubResource("Mat_sandstone")
+[node name="ALongCover" type="CSGBox3D" parent="Terrain"]
+position = Vector3(-18, 1, 5)
+size = Vector3(2.5, 2, 2.5)
+use_collision = true
+material = SubResource("Mat_crate")
+
+[node name="BTunnelWest" type="CSGBox3D" parent="Terrain"]
+position = Vector3(10, 2, -5)
+size = Vector3(0.55, 4, 13)
+use_collision = true
+material = SubResource("Mat_sandstone")
+[node name="BTunnelEast" type="CSGBox3D" parent="Terrain"]
+position = Vector3(16, 2, -3)
+size = Vector3(0.55, 4, 9)
+use_collision = true
+material = SubResource("Mat_sandstone")
+[node name="BTunnelTurn" type="CSGBox3D" parent="Terrain"]
+position = Vector3(13, 2, 2)
+size = Vector3(6.5, 4, 0.55)
+use_collision = true
+material = SubResource("Mat_plaster")
+[node name="BTunnelPillar" type="CSGBox3D" parent="Terrain"]
+position = Vector3(13, 1.5, -5)
+size = Vector3(1.2, 3, 1.2)
+use_collision = true
+material = SubResource("Mat_plaster")
+
+[node name="MidCoverNorth" type="CSGBox3D" parent="Terrain"]
+position = Vector3(0, 1, 12)
+size = Vector3(3, 2, 1.2)
+use_collision = true
+material = SubResource("Mat_crate")
+[node name="MidCoverSouth" type="CSGBox3D" parent="Terrain"]
+position = Vector3(0, 1, -13)
+size = Vector3(4, 2, 1.2)
+use_collision = true
+material = SubResource("Mat_crate")
+[node name="MidSideCover" type="CSGBox3D" parent="Terrain"]
+position = Vector3(6, 1.25, 5)
+size = Vector3(2, 2.5, 3)
+use_collision = true
+material = SubResource("Mat_crate")
+
+[node name="AStair1" type="CSGBox3D" parent="Terrain"]
+position = Vector3(-4.5, 0.25, 13)
+size = Vector3(3, 0.5, 1.2)
+use_collision = true
+material = SubResource("Mat_plaster")
+[node name="AStair2" type="CSGBox3D" parent="Terrain"]
+position = Vector3(-4.5, 0.5, 14.1)
+size = Vector3(3, 1, 1.2)
+use_collision = true
+material = SubResource("Mat_plaster")
+[node name="AStair3" type="CSGBox3D" parent="Terrain"]
+position = Vector3(-4.5, 0.75, 15.2)
+size = Vector3(3, 1.5, 1.2)
+use_collision = true
+material = SubResource("Mat_plaster")
+
+[node name="BBackWall" type="CSGBox3D" parent="Terrain"]
+position = Vector3(19, 2, -11)
+size = Vector3(0.6, 4, 10)
+use_collision = true
+material = SubResource("Mat_sandstone")
+[node name="BWindowCover" type="CSGBox3D" parent="Terrain"]
+position = Vector3(8, 1.5, -16)
+size = Vector3(1.2, 3, 5)
+use_collision = true
+material = SubResource("Mat_plaster")
+
+[node name="BuildingA" type="CSGBox3D" parent="Terrain"]
+position = Vector3(-12, 3, 5)
+size = Vector3(5, 6, 5)
+use_collision = true
+material = SubResource("Mat_plaster")
+[node name="BuildingB" type="CSGBox3D" parent="Terrain"]
+position = Vector3(18, 3, 10)
+size = Vector3(6, 6, 7)
+use_collision = true
+material = SubResource("Mat_plaster")
+[node name="BuildingMid" type="CSGBox3D" parent="Terrain"]
+position = Vector3(7, 3, 15)
+size = Vector3(8, 6, 5)
+use_collision = true
+material = SubResource("Mat_sandstone")
+
+[node name="SiteAColor" type="CSGCylinder3D" parent="Terrain"]
+position = Vector3(-10, 2.28, 18)
+radius = 3.2
+height = 0.08
+sides = 24
+use_collision = false
+material = SubResource("Mat_site_a")
+
+[node name="SiteBColor" type="CSGCylinder3D" parent="Terrain"]
+position = Vector3(14, 2.28, -15)
+radius = 2.8
+height = 0.08
+sides = 24
+use_collision = false
+material = SubResource("Mat_site_b")
+
+[node name="SiteALabel" type="Label3D" parent="Terrain"]
+position = Vector3(-10, 4.8, 13.8)
+text = "A"
+font_size = 160
+outline_size = 18
+modulate = Color(1, 0.22, 0.12, 1)
+billboard = 1
+
+[node name="SiteBLabel" type="Label3D" parent="Terrain"]
+position = Vector3(14, 4.8, -10.8)
+text = "B"
+font_size = 160
+outline_size = 18
+modulate = Color(0.15, 0.55, 1, 1)
+billboard = 1
+
+[node name="MidLabel" type="Label3D" parent="Terrain"]
+position = Vector3(0, 4.2, -4.7)
+text = "MID"
+font_size = 80
+outline_size = 12
+modulate = Color(1, 0.84, 0.24, 1)
+billboard = 1

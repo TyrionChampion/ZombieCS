@@ -1,0 +1,292 @@
+[gd_scene load_steps=2 format=3 uid="uid://dmainmenu0001"]
+
+[ext_resource type="Script" path="res://scripts/main_menu.gd" id="1_main_menu"]
+
+[node name="MainMenu" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_main_menu")
+
+[node name="Background" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0.055, 0.075, 0.095, 1)
+
+[node name="MenuPanel" type="Panel" parent="."]
+custom_minimum_size = Vector2(500, 430)
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -250.0
+offset_top = -215.0
+offset_right = 250.0
+offset_bottom = 215.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Margin" type="MarginContainer" parent="MenuPanel"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 28.0
+offset_top = 24.0
+offset_right = -28.0
+offset_bottom = -24.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="VBox" type="VBoxContainer" parent="MenuPanel/Margin"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="TitleLabel" type="Label" parent="MenuPanel/Margin/VBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 30
+text = "CSOL 生化模式"
+horizontal_alignment = 1
+
+[node name="Subtitle" type="Label" parent="MenuPanel/Margin/VBox"]
+layout_mode = 2
+text = "模块化随机地图 · 24 人生化对抗"
+horizontal_alignment = 1
+modulate = Color(0.72, 0.78, 0.84, 1)
+
+[node name="NameInput" type="LineEdit" parent="MenuPanel/Margin/VBox"]
+layout_mode = 2
+placeholder_text = "你的名字"
+text = "玩家"
+
+[node name="AddressInput" type="LineEdit" parent="MenuPanel/Margin/VBox"]
+layout_mode = 2
+placeholder_text = "服务器地址（默认 127.0.0.1）"
+
+[node name="HostButton" type="Button" parent="MenuPanel/Margin/VBox"]
+custom_minimum_size = Vector2(0, 42)
+layout_mode = 2
+text = "创建房间"
+
+[node name="JoinButton" type="Button" parent="MenuPanel/Margin/VBox"]
+custom_minimum_size = Vector2(0, 42)
+layout_mode = 2
+text = "加入房间"
+
+[node name="SettingsButton" type="Button" parent="MenuPanel/Margin/VBox"]
+custom_minimum_size = Vector2(0, 42)
+layout_mode = 2
+text = "设置"
+
+[node name="StatusLabel" type="Label" parent="MenuPanel/Margin/VBox"]
+layout_mode = 2
+text = "输入名字，然后创建或加入房间"
+horizontal_alignment = 1
+autowrap_mode = 2
+
+[node name="SettingsOverlay" type="Control" parent="."]
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 1
+
+[node name="Shade" type="ColorRect" parent="SettingsOverlay"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0, 0, 0, 0.72)
+
+[node name="Center" type="CenterContainer" parent="SettingsOverlay"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Panel" type="Panel" parent="SettingsOverlay/Center"]
+custom_minimum_size = Vector2(700, 570)
+layout_mode = 2
+
+[node name="Margin" type="MarginContainer" parent="SettingsOverlay/Center/Panel"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 30.0
+offset_top = 24.0
+offset_right = -30.0
+offset_bottom = -24.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="VBox" type="VBoxContainer" parent="SettingsOverlay/Center/Panel/Margin"]
+layout_mode = 2
+theme_override_constants/separation = 14
+
+[node name="Title" type="Label" parent="SettingsOverlay/Center/Panel/Margin/VBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 26
+text = "游戏设置"
+horizontal_alignment = 1
+
+[node name="Separator" type="HSeparator" parent="SettingsOverlay/Center/Panel/Margin/VBox"]
+layout_mode = 2
+
+[node name="Grid" type="GridContainer" parent="SettingsOverlay/Center/Panel/Margin/VBox"]
+layout_mode = 2
+theme_override_constants/h_separation = 22
+theme_override_constants/v_separation = 12
+columns = 2
+
+[node name="ResolutionLabel" type="Label" parent="SettingsOverlay/Center/Panel/Margin/VBox/Grid"]
+layout_mode = 2
+text = "分辨率"
+
+[node name="ResolutionOption" type="OptionButton" parent="SettingsOverlay/Center/Panel/Margin/VBox/Grid"]
+custom_minimum_size = Vector2(360, 38)
+layout_mode = 2
+
+[node name="DisplayModeLabel" type="Label" parent="SettingsOverlay/Center/Panel/Margin/VBox/Grid"]
+layout_mode = 2
+text = "显示模式"
+
+[node name="DisplayModeOption" type="OptionButton" parent="SettingsOverlay/Center/Panel/Margin/VBox/Grid"]
+custom_minimum_size = Vector2(360, 38)
+layout_mode = 2
+
+[node name="RefreshLabel" type="Label" parent="SettingsOverlay/Center/Panel/Margin/VBox/Grid"]
+layout_mode = 2
+text = "显示器刷新率"
+
+[node name="RefreshValue" type="Label" parent="SettingsOverlay/Center/Panel/Margin/VBox/Grid"]
+layout_mode = 2
+text = "检测中……"
+
+[node name="VsyncLabel" type="Label" parent="SettingsOverlay/Center/Panel/Margin/VBox/Grid"]
+layout_mode = 2
+text = "垂直同步"
+
+[node name="VsyncCheck" type="CheckButton" parent="SettingsOverlay/Center/Panel/Margin/VBox/Grid"]
+layout_mode = 2
+text = "开启"
+
+[node name="FpsLabel" type="Label" parent="SettingsOverlay/Center/Panel/Margin/VBox/Grid"]
+layout_mode = 2
+text = "最大帧率"
+
+[node name="FpsOption" type="OptionButton" parent="SettingsOverlay/Center/Panel/Margin/VBox/Grid"]
+custom_minimum_size = Vector2(360, 38)
+layout_mode = 2
+
+[node name="MasterLabel" type="Label" parent="SettingsOverlay/Center/Panel/Margin/VBox/Grid"]
+layout_mode = 2
+text = "主音量"
+
+[node name="MasterRow" type="HBoxContainer" parent="SettingsOverlay/Center/Panel/Margin/VBox/Grid"]
+layout_mode = 2
+
+[node name="MasterSlider" type="HSlider" parent="SettingsOverlay/Center/Panel/Margin/VBox/Grid/MasterRow"]
+custom_minimum_size = Vector2(290, 0)
+layout_mode = 2
+size_flags_horizontal = 3
+max_value = 100.0
+step = 1.0
+
+[node name="MasterValue" type="Label" parent="SettingsOverlay/Center/Panel/Margin/VBox/Grid/MasterRow"]
+custom_minimum_size = Vector2(60, 0)
+layout_mode = 2
+text = "85%"
+horizontal_alignment = 2
+
+[node name="EffectsLabel" type="Label" parent="SettingsOverlay/Center/Panel/Margin/VBox/Grid"]
+layout_mode = 2
+text = "音效音量"
+
+[node name="EffectsRow" type="HBoxContainer" parent="SettingsOverlay/Center/Panel/Margin/VBox/Grid"]
+layout_mode = 2
+
+[node name="EffectsSlider" type="HSlider" parent="SettingsOverlay/Center/Panel/Margin/VBox/Grid/EffectsRow"]
+custom_minimum_size = Vector2(290, 0)
+layout_mode = 2
+size_flags_horizontal = 3
+max_value = 100.0
+step = 1.0
+
+[node name="EffectsValue" type="Label" parent="SettingsOverlay/Center/Panel/Margin/VBox/Grid/EffectsRow"]
+custom_minimum_size = Vector2(60, 0)
+layout_mode = 2
+text = "90%"
+horizontal_alignment = 2
+
+[node name="SensitivityLabel" type="Label" parent="SettingsOverlay/Center/Panel/Margin/VBox/Grid"]
+layout_mode = 2
+text = "鼠标灵敏度"
+
+[node name="SensitivityRow" type="HBoxContainer" parent="SettingsOverlay/Center/Panel/Margin/VBox/Grid"]
+layout_mode = 2
+
+[node name="SensitivitySlider" type="HSlider" parent="SettingsOverlay/Center/Panel/Margin/VBox/Grid/SensitivityRow"]
+custom_minimum_size = Vector2(290, 0)
+layout_mode = 2
+size_flags_horizontal = 3
+min_value = 0.25
+max_value = 3.0
+step = 0.05
+value = 1.0
+
+[node name="SensitivityValue" type="Label" parent="SettingsOverlay/Center/Panel/Margin/VBox/Grid/SensitivityRow"]
+custom_minimum_size = Vector2(60, 0)
+layout_mode = 2
+text = "1.0x"
+horizontal_alignment = 2
+
+[node name="Hint" type="Label" parent="SettingsOverlay/Center/Panel/Margin/VBox"]
+layout_mode = 2
+text = "提示：刷新率由 Windows 管理；开启垂直同步后，游戏帧率会跟随显示器刷新率。"
+autowrap_mode = 2
+modulate = Color(0.7, 0.76, 0.82, 1)
+
+[node name="Buttons" type="HBoxContainer" parent="SettingsOverlay/Center/Panel/Margin/VBox"]
+layout_mode = 2
+alignment = 2
+theme_override_constants/separation = 12
+
+[node name="ResetButton" type="Button" parent="SettingsOverlay/Center/Panel/Margin/VBox/Buttons"]
+custom_minimum_size = Vector2(120, 40)
+layout_mode = 2
+text = "恢复默认"
+
+[node name="CloseButton" type="Button" parent="SettingsOverlay/Center/Panel/Margin/VBox/Buttons"]
+custom_minimum_size = Vector2(120, 40)
+layout_mode = 2
+text = "取消"
+
+[node name="ApplyButton" type="Button" parent="SettingsOverlay/Center/Panel/Margin/VBox/Buttons"]
+custom_minimum_size = Vector2(120, 40)
+layout_mode = 2
+text = "应用并保存"
+
+[connection signal="pressed" from="MenuPanel/Margin/VBox/HostButton" to="." method="_on_host_button_pressed"]
+[connection signal="pressed" from="MenuPanel/Margin/VBox/JoinButton" to="." method="_on_join_button_pressed"]
+[connection signal="pressed" from="MenuPanel/Margin/VBox/SettingsButton" to="." method="_on_settings_button_pressed"]
+[connection signal="pressed" from="SettingsOverlay/Center/Panel/Margin/VBox/Buttons/ResetButton" to="." method="_on_reset_settings_pressed"]
+[connection signal="pressed" from="SettingsOverlay/Center/Panel/Margin/VBox/Buttons/CloseButton" to="." method="_on_close_settings_pressed"]
+[connection signal="pressed" from="SettingsOverlay/Center/Panel/Margin/VBox/Buttons/ApplyButton" to="." method="_on_apply_settings_pressed"]
