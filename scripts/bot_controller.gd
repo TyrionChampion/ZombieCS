@@ -211,6 +211,9 @@ func _fire_at_target(distance: float) -> void:
 	weapons.call("switch_weapon", weapon_index)
 	if not bool(weapons.call("shoot")):
 		return
+	var hit_chance := clampf(0.32 - distance * 0.008, 0.08, 0.3)
+	if randf() > hit_chance:
+		return
 	shot_sequence += 1
 	var weapon := weapons.call("get_current_weapon") as WeaponData
 	var pellet_hits := 1

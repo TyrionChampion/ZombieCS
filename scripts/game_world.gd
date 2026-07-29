@@ -22,6 +22,7 @@ extends Node3D
 var player_scene: PackedScene = preload("res://scenes/player.tscn")
 var local_player: CharacterBody3D
 var _notification_serial := 0
+var _zombie_reveal_scheduled := false
 var current_map_seed: int = 0
 var current_module_ids: Array[int] = []
 var _procedural_map: Node3D
@@ -333,6 +334,7 @@ func _on_player_left(peer_id: int) -> void:
 func _on_state_changed(new_state: int) -> void:
 	if new_state == GameManager.GameState.COUNTDOWN:
 		game_over_panel.visible = false
+		_zombie_reveal_scheduled = false
 		Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
 
 
@@ -357,7 +359,9 @@ func _on_time(seconds: float) -> void:
 
 
 func _on_zombie_chosen(peer_id: int, player_name: String) -> void:
-	_play_zombie_reveal_sound()
+	if not _zombie_reveal_scheduled:
+		_zombie_reveal_scheduled = true
+		_play_zombie_reveal_sound()
 	if peer_id == multiplayer.get_unique_id():
 		_show_notification("你成为了初始僵尸！感染所有人类！")
 	else:

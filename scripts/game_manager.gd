@@ -18,8 +18,10 @@ signal map_seed_changed(map_seed: int)
 const COUNTDOWN_SECONDS := 5.0
 const ROUND_SECONDS := 240.0
 const HUMAN_HEALTH := 100.0
-const ZOMBIE_HEALTH := 300.0
-const ZOMBIE_RESPAWN_SECONDS := 3.0
+const ZOMBIE_HEALTH := 1600.0
+const ZOMBIE_RESPAWN_SECONDS := 2.0
+const LAST_ZOMBIE_RESPAWN_SECONDS := 0.35
+const ZOMBIE_SPAWN_PROTECTION_SECONDS := 3.0
 
 var state: GameState = GameState.WAITING
 var countdown_timer := COUNTDOWN_SECONDS
@@ -29,6 +31,7 @@ var _last_countdown_second := -1
 var _time_sync_accumulator := 0.0
 var _last_shot_time: Dictionary = {}
 var _last_shot_sequence: Dictionary = {}
+var _zombie_protected_until: Dictionary = {}
 var map_seed: int = 1
 
 
@@ -96,6 +99,7 @@ func start_game() -> void:
 	_time_sync_accumulator = 0.0
 	_last_shot_time.clear()
 	_last_shot_sequence.clear()
+	_zombie_protected_until.clear()
 	_set_state_server(GameState.COUNTDOWN)
 
 
@@ -117,7 +121,9 @@ func _choose_zombies() -> void:
 			bot_candidates.append(pid)
 	var pool := bot_candidates if not bot_candidates.is_empty() else candidates
 	pool.shuffle()
-	_set_zombie_server(pool[0], true)
+	var zombie_count := clampi(ceili(float(NetworkManager.players.size()) / 8.0), 1, pool.size())
+	for index in range(zombie_count):
+		_set_zombie_server(pool[index], true)
 
 
 func request_infection(victim_id: int, attacker_id: int) -> void:
@@ -167,6 +173,7 @@ func _set_zombie_server(peer_id: int, initially_chosen: bool, attacker_id: int =
 	info["alive"] = true
 	info["health"] = ZOMBIE_HEALTH
 	info["max_health"] = ZOMBIE_HEALTH
+	_zombie_protected_until[peer_id] = Time.get_ticks_msec() + int(ZOMBIE_SPAWN_PROTECTION_SECONDS * 1000.0)
 	NetworkManager.update_player_info(peer_id, info)
 	if initially_chosen:
 		rpc("_sync_zombie_chosen", peer_id, str(info.get("name", "玩家")))
@@ -196,6 +203,8 @@ func _server_weapon_hit(victim_id: int, weapon_index: int, hit_pos: Vector3, pel
 	if attacker.get("is_zombie", false) or not attacker.get("alive", true):
 		return
 	if not victim.get("is_zombie", false) or not victim.get("alive", true):
+		return
+	if Time.get_ticks_msec() < int(_zombie_protected_until.get(victim_id, 0)):
 		return
 	var weapon := WeaponData.from_index(weapon_index)
 	if weapon == null:
@@ -251,17 +260,23 @@ func _kill_zombie(peer_id: int) -> void:
 	info["alive"] = false
 	NetworkManager.update_player_info(peer_id, info)
 	rpc("_sync_player_died", peer_id)
-	_respawn_zombie_after_delay(peer_id)
+	var respawn_delay := (
+		LAST_ZOMBIE_RESPAWN_SECONDS
+		if NetworkManager.get_alive_zombies_count() == 0
+		else ZOMBIE_RESPAWN_SECONDS
+	)
+	_respawn_zombie_after_delay(peer_id, respawn_delay)
 
 
-func _respawn_zombie_after_delay(peer_id: int) -> void:
-	await get_tree().create_timer(ZOMBIE_RESPAWN_SECONDS).timeout
+func _respawn_zombie_after_delay(peer_id: int, delay: float) -> void:
+	await get_tree().create_timer(delay).timeout
 	if state != GameState.PLAYING or not NetworkManager.players.has(peer_id):
 		return
 	var info: Dictionary = NetworkManager.players[peer_id].duplicate(true)
 	info["alive"] = true
 	info["health"] = ZOMBIE_HEALTH
 	info["max_health"] = ZOMBIE_HEALTH
+	_zombie_protected_until[peer_id] = Time.get_ticks_msec() + int(ZOMBIE_SPAWN_PROTECTION_SECONDS * 1000.0)
 	NetworkManager.update_player_info(peer_id, info)
 	rpc("_sync_player_respawned", peer_id, ZOMBIE_HEALTH)
 

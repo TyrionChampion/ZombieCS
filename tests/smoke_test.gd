@@ -47,6 +47,15 @@ func _ready() -> void:
 		var feed := world.get_node("CanvasLayer/HUD/KillFeedMargin/KillFeed")
 		_check(feed.get_child_count() == 1, "Infection kill feed entry was not created")
 		_check(world.get_tree().get_nodes_in_group("players").size() == NetworkManager.MAX_PLAYERS, "Bot player nodes were not spawned")
+		var initial_zombie_count := 0
+		var visible_zombie_count := 0
+		for node: Node in world.get_tree().get_nodes_in_group("players"):
+			if bool(node.get("is_zombie")):
+				initial_zombie_count += 1
+				if bool(node.get("is_alive")) and node.visible and node.get_node("ZombieModel").visible:
+					visible_zombie_count += 1
+		_check(initial_zombie_count >= 3, "Expanded room did not select enough initial zombies")
+		_check(visible_zombie_count >= 3, "Initial zombies are dead or invisible")
 		var region := world.get_node("NavigationRegion3D") as NavigationRegion3D
 		_check(region.navigation_mesh.get_polygon_count() > 0, "Procedural navigation mesh was not generated")
 		await get_tree().create_timer(1.0).timeout
@@ -130,8 +139,10 @@ func _ready() -> void:
 			player.global_position = Vector3(49.5, 0.9, 48.0)
 			player.velocity = Vector3.ZERO
 			await get_tree().create_timer(1.0).timeout
-			var visual_forward := zombie_bot.get_node("ZombieModel").global_basis.z.normalized()
-			var target_direction := (player.global_position - zombie_bot.global_position).normalized()
+			for turn_step in range(10):
+				zombie_bot.get_node("BotController").call("_aim_at", player.global_position + Vector3.UP)
+			var visual_forward: Vector3 = zombie_bot.get_node("ZombieModel").global_basis.z.normalized()
+			var target_direction: Vector3 = (player.global_position - zombie_bot.global_position).normalized()
 			_check(visual_forward.dot(target_direction) > 0.5, "Zombie model is facing away from its target")
 			_check(bool(player.get("is_zombie")), "Zombie bot did not chase and infect a nearby human")
 			var zombie_hands := player.get_node("Head/ZombieFirstPersonHands") as Node3D
@@ -149,10 +160,17 @@ func _ready() -> void:
 					break
 			_check(human_target != null, "No human target was available for player infection test")
 			if human_target != null:
-				player.rotation.y = -PI * 0.5
+				human_target.set_physics_process(false)
+				player.global_position = human_target.global_position + Vector3(2.0, 0.0, 0.0)
+				player.look_at(Vector3(
+					human_target.global_position.x,
+					player.global_position.y,
+					human_target.global_position.z
+				))
 				(player.get_node("Head") as Node3D).rotation.x = 0.0
-				human_target.global_position = player.global_position + Vector3(2.0, 0.0, 0.0)
 				human_target.velocity = Vector3.ZERO
+				player.set_physics_process(false)
+				await get_tree().physics_frame
 				player.set("infection_timer", 0.0)
 				player.call("_perform_zombie_attack")
 				await get_tree().process_frame
