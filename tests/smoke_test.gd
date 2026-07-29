@@ -95,6 +95,9 @@ func _ready() -> void:
 			player.global_position = Vector3(49.5, 0.9, 48.0)
 			player.velocity = Vector3.ZERO
 			await get_tree().create_timer(1.0).timeout
+			var visual_forward := zombie_bot.get_node("ZombieModel").global_basis.z.normalized()
+			var target_direction := (player.global_position - zombie_bot.global_position).normalized()
+			_check(visual_forward.dot(target_direction) > 0.5, "Zombie model is facing away from its target")
 			_check(bool(player.get("is_zombie")), "Zombie bot did not chase and infect a nearby human")
 
 	NetworkManager.leave_game()
