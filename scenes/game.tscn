@@ -1,6 +1,7 @@
 [gd_scene format=3 uid="uid://dgame000001"]
 
 [ext_resource type="Script" path="res://scripts/game_world.gd" id="1_game_world"]
+[ext_resource type="Script" path="res://scripts/damage_indicator.gd" id="2_damage_indicator"]
 
 [sub_resource type="ProceduralSkyMaterial" id="SkyMaterial_dust"]
 sky_top_color = Color(0.16, 0.42, 0.72, 1)
@@ -264,6 +265,23 @@ grow_vertical = 2
 text = "+"
 horizontal_alignment = 1
 vertical_alignment = 1
+
+[node name="DamageIndicator" type="Control" parent="CanvasLayer/HUD"]
+visible = false
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -100.0
+offset_top = -100.0
+offset_right = 100.0
+offset_bottom = 100.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+script = ExtResource("2_damage_indicator")
 [node name="NotificationLabel" type="Label" parent="CanvasLayer/HUD"]
 visible = false
 layout_mode = 1

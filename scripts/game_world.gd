@@ -12,6 +12,7 @@ extends Node3D
 @onready var notification_label: Label = $CanvasLayer/HUD/NotificationLabel
 @onready var kill_feed: VBoxContainer = $CanvasLayer/HUD/KillFeedMargin/KillFeed
 @onready var crosshair: Label = $CanvasLayer/HUD/Crosshair
+@onready var damage_indicator: Control = $CanvasLayer/HUD/DamageIndicator
 @onready var game_over_panel: Panel = $CanvasLayer/HUD/GameOverPanel
 @onready var game_over_label: Label = $CanvasLayer/HUD/GameOverPanel/GameOverLabel
 @onready var restart_button: Button = $CanvasLayer/HUD/GameOverPanel/RestartButton
@@ -301,6 +302,7 @@ func _spawn_player(peer_id: int) -> void:
 		player.connect("role_changed", _on_local_role_changed)
 		player.connect("notification_requested", _show_notification)
 		player.connect("hit_confirmed", _on_hit_confirmed)
+		player.connect("damage_direction_received", _on_damage_direction_received)
 		_refresh_local_hud()
 
 
@@ -485,6 +487,10 @@ func _on_hit_confirmed() -> void:
 	await get_tree().create_timer(0.12).timeout
 	crosshair.text = "+"
 	crosshair.modulate = Color.WHITE
+
+
+func _on_damage_direction_received(source_angle: float) -> void:
+	damage_indicator.call("show_hit", source_angle)
 
 
 func _show_notification(message: String) -> void:

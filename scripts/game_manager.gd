@@ -8,7 +8,7 @@ signal countdown_updated(seconds: int)
 signal game_time_updated(seconds: float)
 signal zombie_chosen(peer_id: int, player_name: String)
 signal player_infected(victim_id: int, attacker_id: int)
-signal player_health_changed(peer_id: int, health: float, max_health: float, hit_pos: Vector3, knockback: float)
+signal player_health_changed(peer_id: int, health: float, max_health: float, source_position: Vector3, knockback: float)
 signal player_died(peer_id: int)
 signal player_respawned(peer_id: int, health: float)
 signal player_reset(peer_id: int, health: float)
@@ -230,7 +230,14 @@ func _server_weapon_hit(victim_id: int, weapon_index: int, hit_pos: Vector3, pel
 	var health := maxf(0.0, float(victim.get("health", ZOMBIE_HEALTH)) - damage)
 	victim["health"] = health
 	NetworkManager.update_player_info(victim_id, victim)
-	rpc("_sync_damage", victim_id, health, float(victim.get("max_health", ZOMBIE_HEALTH)), hit_pos, weapon.knockback)
+	rpc(
+		"_sync_damage",
+		victim_id,
+		health,
+		float(victim.get("max_health", ZOMBIE_HEALTH)),
+		attacker_node.global_position,
+		weapon.knockback
+	)
 	if health <= 0.0:
 		_kill_zombie(victim_id)
 
@@ -329,10 +336,10 @@ func _sync_player_infected(peer_id: int, attacker_id: int) -> void:
 
 
 @rpc("authority", "call_local", "reliable")
-func _sync_damage(peer_id: int, health: float, max_health: float, hit_pos: Vector3, knockback: float) -> void:
+func _sync_damage(peer_id: int, health: float, max_health: float, source_position: Vector3, knockback: float) -> void:
 	if NetworkManager.players.has(peer_id):
 		NetworkManager.players[peer_id]["health"] = health
-	player_health_changed.emit(peer_id, health, max_health, hit_pos, knockback)
+	player_health_changed.emit(peer_id, health, max_health, source_position, knockback)
 
 
 @rpc("authority", "call_local", "reliable")

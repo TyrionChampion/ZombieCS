@@ -52,6 +52,7 @@ height = 1.8
 path_max_distance = 3.5
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+position = Vector3(0, 0.9, 0)
 shape = SubResource("CapsuleShape_1")
 
 [node name="Head" type="Node3D" parent="."]

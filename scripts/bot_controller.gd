@@ -45,6 +45,7 @@ func tick(delta: float) -> void:
 		_tick_zombie(delta)
 	else:
 		_tick_human(delta)
+	actor.call("apply_pending_knockback", delta)
 	actor.move_and_slide()
 
 

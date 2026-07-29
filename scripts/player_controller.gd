@@ -5,6 +5,7 @@ signal health_changed(current: float, maximum: float)
 signal role_changed(is_zombie: bool)
 signal notification_requested(message: String)
 signal hit_confirmed()
+signal damage_direction_received(source_angle: float)
 
 @export var move_speed := 5.0
 @export var sprint_speed := 7.5
@@ -26,6 +27,7 @@ var _remote_position := Vector3.ZERO
 var _remote_yaw := 0.0
 var _remote_pitch := 0.0
 var _shot_sequence := 0
+var _knockback_velocity := Vector3.ZERO
 
 @onready var camera: Camera3D = $Head/Camera3D
 @onready var head: Node3D = $Head
@@ -145,6 +147,7 @@ func _physics_process(delta: float) -> void:
 	else:
 		velocity.x = move_toward(velocity.x, 0.0, speed)
 		velocity.z = move_toward(velocity.z, 0.0, speed)
+	apply_pending_knockback(delta)
 	move_and_slide()
 
 	if Input.get_mouse_mode() == Input.MOUSE_MODE_CAPTURED:
@@ -333,16 +336,32 @@ func _on_player_infected(pid: int, _attacker_id: int) -> void:
 		set_zombie(true)
 
 
-func _on_player_health_changed(pid: int, new_health: float, new_max: float, hit_pos: Vector3, knockback: float) -> void:
+func _on_player_health_changed(pid: int, new_health: float, new_max: float, source_position: Vector3, knockback: float) -> void:
 	if pid != peer_id:
 		return
 	health = new_health
 	max_health = new_max
 	health_changed.emit(health, max_health)
 	if is_multiplayer_authority() and knockback > 0.0:
-		var direction := (global_position - hit_pos).normalized()
-		direction.y = maxf(direction.y, 0.25)
-		velocity += direction.normalized() * knockback
+		var away := global_position - source_position
+		away.y = 0.0
+		if away.length_squared() > 0.01:
+			_knockback_velocity += away.normalized() * knockback
+		if is_zombie and not is_bot:
+			var toward_source := source_position - global_position
+			toward_source.y = 0.0
+			if toward_source.length_squared() > 0.01:
+				var local_source := global_basis.inverse() * toward_source.normalized()
+				damage_direction_received.emit(atan2(local_source.x, -local_source.z))
+
+
+func apply_pending_knockback(delta: float) -> void:
+	if _knockback_velocity.length_squared() <= 0.01:
+		_knockback_velocity = Vector3.ZERO
+		return
+	velocity.x = _knockback_velocity.x
+	velocity.z = _knockback_velocity.z
+	_knockback_velocity = _knockback_velocity.move_toward(Vector3.ZERO, 10.0 * delta)
 
 
 func _on_player_died(pid: int) -> void:
@@ -350,6 +369,7 @@ func _on_player_died(pid: int) -> void:
 		return
 	is_alive = false
 	visible = false
+	_knockback_velocity = Vector3.ZERO
 	$CollisionShape3D.set_deferred("disabled", true)
 	if is_multiplayer_authority() and not is_bot:
 		notification_requested.emit("你被击倒，3 秒后重生")
@@ -359,6 +379,7 @@ func _on_player_respawned(pid: int, new_health: float) -> void:
 	if pid != peer_id:
 		return
 	is_alive = true
+	_knockback_velocity = Vector3.ZERO
 	health = new_health
 	max_health = GameManager.ZOMBIE_HEALTH
 	visible = true
@@ -370,6 +391,7 @@ func _on_player_reset(pid: int, new_health: float) -> void:
 	if pid != peer_id:
 		return
 	is_alive = true
+	_knockback_velocity = Vector3.ZERO
 	health = new_health
 	max_health = GameManager.HUMAN_HEALTH
 	set_zombie(false)
@@ -383,6 +405,7 @@ func reset_for_round(spawn_position: Vector3) -> void:
 	global_position = spawn_position
 	_remote_position = spawn_position
 	velocity = Vector3.ZERO
+	_knockback_velocity = Vector3.ZERO
 
 
 func set_zombie(value: bool) -> void:

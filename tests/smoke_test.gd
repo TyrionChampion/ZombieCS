@@ -36,6 +36,7 @@ func _ready() -> void:
 		_check(player != null, "Local player was not spawned")
 		_check(world.has_node("CanvasLayer/HUD/AmmoLabel"), "Ammo HUD is missing")
 		_check(world.has_node("CanvasLayer/HUD/KillFeedMargin/KillFeed"), "Infection kill feed is missing")
+		_check(world.has_node("CanvasLayer/HUD/DamageIndicator"), "Zombie damage direction indicator is missing")
 		world.call("_on_countdown", 5)
 		var announcer := world.get_node("CountdownAnnouncer") as AudioStreamPlayer
 		var reveal_sound := world.get_node("ZombieRevealSound") as AudioStreamPlayer
@@ -49,6 +50,14 @@ func _ready() -> void:
 		var region := world.get_node("NavigationRegion3D") as NavigationRegion3D
 		_check(region.navigation_mesh.get_polygon_count() > 0, "Procedural navigation mesh was not generated")
 		await get_tree().create_timer(1.0).timeout
+		if player != null:
+			var player_collider := player.get_node("CollisionShape3D") as CollisionShape3D
+			var capsule := player_collider.shape as CapsuleShape3D
+			_check(
+				absf(player_collider.position.y - capsule.height * 0.5) < 0.01,
+				"Character collision capsule is not aligned with the feet"
+			)
+			_check(absf(player.global_position.y) < 0.15, "Character model is floating above the ground")
 		var bot_positions: Dictionary = {}
 		for node: Node in world.get_tree().get_nodes_in_group("players"):
 			if bool(node.get("is_bot")):
@@ -105,6 +114,17 @@ func _ready() -> void:
 				break
 		_check(zombie_bot != null, "No zombie bot was selected")
 		if zombie_bot != null and player != null:
+			zombie_bot.velocity = Vector3(0.0, 0.0, -float(zombie_bot.get("zombie_speed")))
+			zombie_bot.call(
+				"_on_player_health_changed",
+				int(zombie_bot.get("peer_id")),
+				float(zombie_bot.get("health")) - 1.0,
+				float(zombie_bot.get("max_health")),
+				zombie_bot.global_position + Vector3(0.0, 0.0, -5.0),
+				4.5
+			)
+			zombie_bot.call("apply_pending_knockback", 0.016)
+			_check(zombie_bot.velocity.z > 0.0, "Zombie chase velocity overrides weapon knockback")
 			zombie_bot.global_position = Vector3(48.0, 0.9, 48.0)
 			zombie_bot.velocity = Vector3.ZERO
 			player.global_position = Vector3(49.5, 0.9, 48.0)
@@ -137,6 +157,18 @@ func _ready() -> void:
 				player.call("_perform_zombie_attack")
 				await get_tree().process_frame
 				_check(bool(human_target.get("is_zombie")), "Local player zombie attack did not infect a human")
+			player.call(
+				"_on_player_health_changed",
+				int(player.get("peer_id")),
+				float(player.get("health")) - 1.0,
+				float(player.get("max_health")),
+				player.global_position + Vector3(5.0, 0.0, 0.0),
+				4.5
+			)
+			_check(
+				(world.get_node("CanvasLayer/HUD/DamageIndicator") as Control).visible,
+				"Zombie damage direction indicator did not appear"
+			)
 
 	NetworkManager.leave_game()
 	if failures.is_empty():
