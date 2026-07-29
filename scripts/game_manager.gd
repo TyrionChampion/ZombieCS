@@ -149,6 +149,15 @@ func _server_infect(victim_id: int, attacker_id: int) -> void:
 		return
 	if attacker_node.global_position.distance_to(victim_node.global_position) > 3.2:
 		return
+	var query := PhysicsRayQueryParameters3D.create(
+		attacker_node.global_position + Vector3.UP * 1.4,
+		victim_node.global_position + Vector3.UP * 0.85
+	)
+	query.exclude = [attacker_node.get_rid()]
+	query.collision_mask = 3
+	var ray_result := attacker_node.get_world_3d().direct_space_state.intersect_ray(query)
+	if ray_result.is_empty() or ray_result.get("collider") != victim_node:
+		return
 	_set_zombie_server(victim_id, false, attacker_id)
 
 

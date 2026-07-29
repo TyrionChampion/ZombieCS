@@ -122,6 +122,21 @@ func _ready() -> void:
 			await get_tree().create_timer(0.12).timeout
 			_check(right_hand.position.distance_to(hand_start) > 0.05, "First-person zombie attack animation did not move")
 			_check((player.get_node("Head/ZombieAttackSound") as AudioStreamPlayer).playing, "Zombie attack sound did not play")
+			var human_target: CharacterBody3D
+			for node: Node in world.get_tree().get_nodes_in_group("players"):
+				if node is CharacterBody3D and not bool(node.get("is_zombie")) and bool(node.get("is_alive")):
+					human_target = node as CharacterBody3D
+					break
+			_check(human_target != null, "No human target was available for player infection test")
+			if human_target != null:
+				player.rotation.y = -PI * 0.5
+				(player.get_node("Head") as Node3D).rotation.x = 0.0
+				human_target.global_position = player.global_position + Vector3(2.0, 0.0, 0.0)
+				human_target.velocity = Vector3.ZERO
+				player.set("infection_timer", 0.0)
+				player.call("_perform_zombie_attack")
+				await get_tree().process_frame
+				_check(bool(human_target.get("is_zombie")), "Local player zombie attack did not infect a human")
 
 	NetworkManager.leave_game()
 	if failures.is_empty():

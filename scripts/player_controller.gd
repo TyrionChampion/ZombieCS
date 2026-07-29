@@ -174,15 +174,46 @@ func _receive_transform(new_position: Vector3, yaw: float, pitch: float) -> void
 func _zombie_attack() -> void:
 	if not Input.is_action_pressed("attack") or infection_timer > 0.0:
 		return
+	_perform_zombie_attack()
+
+
+func _perform_zombie_attack() -> void:
 	infection_timer = infection_cooldown
 	_play_zombie_attack_feedback()
-	attack_ray.force_raycast_update()
-	if attack_ray.is_colliding():
-		var target := attack_ray.get_collider()
-		if target is CharacterBody3D:
-			var target_id := int(target.get("peer_id"))
-			if target_id != peer_id:
-				GameManager.request_infection(target_id, peer_id)
+	var target := _find_zombie_attack_target()
+	if target != null:
+		GameManager.request_infection(int(target.get("peer_id")), peer_id)
+
+
+func _find_zombie_attack_target() -> CharacterBody3D:
+	var nearest: CharacterBody3D
+	var nearest_distance := INF
+	var forward := -head.global_basis.z
+	forward.y = 0.0
+	forward = forward.normalized()
+	for node: Node in get_tree().get_nodes_in_group("players"):
+		if node == self or not node is CharacterBody3D:
+			continue
+		if bool(node.get("is_zombie")) or not bool(node.get("is_alive")):
+			continue
+		var target := node as CharacterBody3D
+		var offset := target.global_position - global_position
+		var flat_offset := Vector3(offset.x, 0.0, offset.z)
+		var distance := flat_offset.length()
+		if distance > 3.0 or distance >= nearest_distance or distance < 0.01:
+			continue
+		if forward.dot(flat_offset / distance) < 0.45:
+			continue
+		var origin := global_position + Vector3.UP * 1.4
+		var destination := target.global_position + Vector3.UP * 0.85
+		var query := PhysicsRayQueryParameters3D.create(origin, destination)
+		query.exclude = [get_rid()]
+		query.collision_mask = 3
+		var hit := get_world_3d().direct_space_state.intersect_ray(query)
+		if not hit.is_empty() and hit.get("collider") == target:
+			nearest = target
+			nearest_distance = distance
+	return nearest
 
 
 func _human_shoot() -> void:
