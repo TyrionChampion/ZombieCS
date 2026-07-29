@@ -413,7 +413,9 @@ func _add_kill_feed_entry(attacker_name: String, victim_name: String) -> void:
 	kill_feed.add_child(row)
 	kill_feed.move_child(row, 0)
 	while kill_feed.get_child_count() > 6:
-		kill_feed.get_child(kill_feed.get_child_count() - 1).queue_free()
+		var oldest_entry := kill_feed.get_child(kill_feed.get_child_count() - 1)
+		kill_feed.remove_child(oldest_entry)
+		oldest_entry.queue_free()
 
 	await get_tree().create_timer(5.0).timeout
 	if not is_instance_valid(row):

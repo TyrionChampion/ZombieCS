@@ -223,6 +223,36 @@ func _ready() -> void:
 			)
 			await get_tree().create_timer(GameManager.NEXT_ROUND_DELAY_SECONDS + 0.2).timeout
 			_check(GameManager.state == GameManager.GameState.COUNTDOWN, "Next round did not start automatically")
+			GameManager.countdown_timer = 0.01
+			GameManager.call("_update_countdown", 0.1)
+			await get_tree().process_frame
+			_check(GameManager.state == GameManager.GameState.PLAYING, "Second round did not enter playing")
+			var infection_attacker_id := -1
+			for pid: int in NetworkManager.players:
+				if bool(NetworkManager.players[pid].get("is_zombie", false)):
+					infection_attacker_id = pid
+					break
+			_check(infection_attacker_id > 0, "Second round has no zombie attacker")
+			if infection_attacker_id > 0:
+				var human_ids: Array[int] = []
+				for pid: int in NetworkManager.players:
+					if not bool(NetworkManager.players[pid].get("is_zombie", false)):
+						human_ids.append(pid)
+				for human_id: int in human_ids:
+					GameManager.call("_set_zombie_server", human_id, false, infection_attacker_id)
+				_check(
+					world.get_node("CanvasLayer/HUD/KillFeedMargin/KillFeed").get_child_count() <= 6,
+					"Infection kill feed exceeded its entry limit"
+				)
+				GameManager.playing_elapsed = 2.1
+				GameManager.call("_update_playing", 0.1)
+				_check(GameManager.state == GameManager.GameState.GAME_OVER, "Infecting every human did not end the round")
+				_check(
+					"僵尸胜利" in (world.get_node("CanvasLayer/HUD/GameOverPanel/GameOverLabel") as Label).text,
+					"Zombie victory message did not appear"
+				)
+				await get_tree().create_timer(GameManager.NEXT_ROUND_DELAY_SECONDS + 0.2).timeout
+				_check(GameManager.state == GameManager.GameState.COUNTDOWN, "Zombie victory did not advance to the next round")
 
 	NetworkManager.leave_game()
 	if failures.is_empty():
