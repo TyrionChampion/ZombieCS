@@ -12,15 +12,25 @@ func _ready() -> void:
 
 	GameManager.start_game()
 	_check(GameManager.state == GameManager.GameState.COUNTDOWN, "Round did not enter countdown")
-	GameManager.countdown_timer = 0.01
-	await get_tree().create_timer(0.1).timeout
-	_check(GameManager.state == GameManager.GameState.PLAYING, "Round did not enter playing")
-
 	var world: Node = load("res://scenes/game.tscn").instantiate()
 	add_child(world)
 	await get_tree().process_frame
 	await get_tree().process_frame
 	_check(world != null and world.name == "Game", "Game scene did not instantiate")
+	_check(GameManager.state == GameManager.GameState.COUNTDOWN, "Countdown finished before the game map loaded")
+	var zombies_during_countdown := 0
+	for node: Node in world.get_tree().get_nodes_in_group("players"):
+		if bool(node.get("is_zombie")):
+			zombies_during_countdown += 1
+	_check(zombies_during_countdown == 0, "Zombies appeared before the in-game countdown finished")
+	_check(
+		(world.get_node("CanvasLayer/HUD/CountdownLabel") as Label).visible,
+		"In-game countdown is not visible after entering the map"
+	)
+	GameManager.countdown_timer = 0.01
+	GameManager.call("_update_countdown", 0.1)
+	await get_tree().process_frame
+	_check(GameManager.state == GameManager.GameState.PLAYING, "Round did not enter playing")
 	if world != null:
 		_check(int(world.get("current_map_seed")) == GameManager.map_seed, "World did not use the round map seed")
 		var ground := world.get_node("Ground") as CSGBox3D

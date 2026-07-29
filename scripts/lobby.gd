@@ -61,6 +61,7 @@ func _on_game_state_changed(new_state: int) -> void:
 	match new_state:
 		GameManager.GameState.COUNTDOWN:
 			start_button.disabled = true
+			get_tree().change_scene_to_file("res://scenes/game.tscn")
 		GameManager.GameState.PLAYING:
 			get_tree().change_scene_to_file("res://scenes/game.tscn")
 

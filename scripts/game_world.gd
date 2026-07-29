@@ -23,6 +23,7 @@ var player_scene: PackedScene = preload("res://scenes/player.tscn")
 var local_player: CharacterBody3D
 var _notification_serial := 0
 var _zombie_reveal_scheduled := false
+var _last_announced_countdown := -1
 var current_map_seed: int = 0
 var current_module_ids: Array[int] = []
 var _procedural_map: Node3D
@@ -91,6 +92,9 @@ func _ready() -> void:
 	for pid: int in ids:
 		_spawn_player(pid)
 	_on_time(GameManager.game_timer)
+	if GameManager.state == GameManager.GameState.COUNTDOWN:
+		_on_state_changed(GameManager.GameState.COUNTDOWN)
+		_on_countdown(maxi(0, int(ceil(GameManager.countdown_timer))))
 
 
 func _prepare_procedural_map() -> void:
@@ -335,6 +339,7 @@ func _on_state_changed(new_state: int) -> void:
 	if new_state == GameManager.GameState.COUNTDOWN:
 		game_over_panel.visible = false
 		_zombie_reveal_scheduled = false
+		_last_announced_countdown = -1
 		Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
 
 
@@ -345,7 +350,8 @@ func _on_countdown(seconds: int) -> void:
 	countdown_label.scale = Vector2(1.35, 1.35)
 	var pulse := create_tween()
 	pulse.tween_property(countdown_label, "scale", Vector2.ONE, 0.22)
-	if seconds >= 0 and seconds < COUNTDOWN_VOICES.size():
+	if seconds >= 0 and seconds < COUNTDOWN_VOICES.size() and seconds != _last_announced_countdown:
+		_last_announced_countdown = seconds
 		countdown_announcer.stream = COUNTDOWN_VOICES[seconds]
 		countdown_announcer.play()
 	if seconds == 0:
