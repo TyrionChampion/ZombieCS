@@ -34,8 +34,17 @@ var _shot_sequence := 0
 @onready var attack_ray: RayCast3D = $Head/AttackRay
 @onready var weapon_system: Node3D = $Head/WeaponSystem
 @onready var bot_controller: Node = $BotController
+@onready var zombie_hands: Node3D = $Head/ZombieFirstPersonHands
+@onready var zombie_left_hand: Node3D = $Head/ZombieFirstPersonHands/LeftHand
+@onready var zombie_right_hand: Node3D = $Head/ZombieFirstPersonHands/RightHand
+@onready var zombie_attack_sound: AudioStreamPlayer = $Head/ZombieAttackSound
 var _human_animation: AnimationPlayer
 var _zombie_animation: AnimationPlayer
+var _zombie_left_hand_base := Transform3D.IDENTITY
+var _zombie_right_hand_base := Transform3D.IDENTITY
+var _zombie_attack_time := 0.0
+var _zombie_attacks_right := false
+const ZOMBIE_ATTACK_ANIMATION_DURATION := 0.34
 
 
 func _ready() -> void:
@@ -67,11 +76,16 @@ func _ready() -> void:
 		_human_animation = human_players[0] as AnimationPlayer
 	if not zombie_players.is_empty():
 		_zombie_animation = zombie_players[0] as AnimationPlayer
+	_zombie_left_hand_base = zombie_left_hand.transform
+	_zombie_right_hand_base = zombie_right_hand.transform
+	if zombie_attack_sound.stream == null:
+		zombie_attack_sound.stream = _make_zombie_attack_sound()
 	_update_appearance()
 
 
-func _process(_delta: float) -> void:
+func _process(delta: float) -> void:
 	_update_model_animation()
+	_update_zombie_attack_animation(delta)
 
 
 func _input(event: InputEvent) -> void:
@@ -161,6 +175,7 @@ func _zombie_attack() -> void:
 	if not Input.is_action_pressed("attack") or infection_timer > 0.0:
 		return
 	infection_timer = infection_cooldown
+	_play_zombie_attack_feedback()
 	attack_ray.force_raycast_update()
 	if attack_ray.is_colliding():
 		var target := attack_ray.get_collider()
@@ -218,7 +233,10 @@ func _human_shoot() -> void:
 
 
 func _on_shot_fired() -> void:
-	if not is_multiplayer_authority() or is_bot:
+	if not is_multiplayer_authority():
+		return
+	rpc("_play_remote_shot_feedback")
+	if is_bot:
 		return
 	var weapon := weapon_system.call("get_current_weapon") as WeaponData
 	if weapon == null:
@@ -229,6 +247,11 @@ func _on_shot_fired() -> void:
 		deg_to_rad(89.0)
 	)
 	rotation.y += randf_range(-weapon.recoil * 0.25, weapon.recoil * 0.25)
+
+
+@rpc("authority", "call_remote", "unreliable")
+func _play_remote_shot_feedback() -> void:
+	weapon_system.call("play_remote_shot_feedback")
 
 
 func _spawn_tracer(start: Vector3, finish: Vector3, color: Color) -> void:
@@ -346,6 +369,7 @@ func _update_appearance() -> void:
 	var show_third_person := is_bot or not is_multiplayer_authority()
 	human_model.visible = show_third_person and not is_zombie
 	zombie_model.visible = show_third_person and is_zombie
+	zombie_hands.visible = is_multiplayer_authority() and not is_bot and is_zombie
 	weapon_system.visible = not is_zombie and is_multiplayer_authority() and not is_bot
 
 
@@ -364,6 +388,59 @@ func _update_model_animation() -> void:
 		requested = "Idle_Gun"
 	if animation_player.has_animation(requested) and animation_player.current_animation != requested:
 		animation_player.play(requested, 0.18)
+
+
+func _play_zombie_attack_feedback() -> void:
+	_zombie_attacks_right = not _zombie_attacks_right
+	_zombie_attack_time = ZOMBIE_ATTACK_ANIMATION_DURATION
+	zombie_attack_sound.pitch_scale = randf_range(0.9, 1.08)
+	zombie_attack_sound.play()
+
+
+func _update_zombie_attack_animation(delta: float) -> void:
+	zombie_left_hand.transform = _zombie_left_hand_base
+	zombie_right_hand.transform = _zombie_right_hand_base
+	if _zombie_attack_time <= 0.0:
+		return
+	_zombie_attack_time = maxf(0.0, _zombie_attack_time - delta)
+	var progress := 1.0 - _zombie_attack_time / ZOMBIE_ATTACK_ANIMATION_DURATION
+	var thrust := sin(progress * PI)
+	var attacking_hand := zombie_right_hand if _zombie_attacks_right else zombie_left_hand
+	var base := _zombie_right_hand_base if _zombie_attacks_right else _zombie_left_hand_base
+	attacking_hand.position = base.origin + Vector3(
+		-0.08 * thrust if _zombie_attacks_right else 0.08 * thrust,
+		0.1 * thrust,
+		-0.42 * thrust
+	)
+	var base_rotation := base.basis.get_euler()
+	attacking_hand.rotation = base_rotation + Vector3(
+		deg_to_rad(-38.0) * thrust,
+		deg_to_rad(8.0 if _zombie_attacks_right else -8.0) * thrust,
+		deg_to_rad(-18.0 if _zombie_attacks_right else 18.0) * thrust
+	)
+
+
+func _make_zombie_attack_sound() -> AudioStreamWAV:
+	var sample_rate := 22050
+	var duration := 0.24
+	var sample_count := int(sample_rate * duration)
+	var bytes := PackedByteArray()
+	var noise := RandomNumberGenerator.new()
+	noise.seed = 131313
+	bytes.resize(sample_count * 2)
+	for i in range(sample_count):
+		var time := float(i) / float(sample_rate)
+		var envelope := exp(-time * 10.0)
+		var growl := sin(TAU * (72.0 - time * 45.0) * time)
+		var scrape := noise.randf_range(-1.0, 1.0)
+		var value := clampf((growl * 0.62 + scrape * 0.38) * envelope * 0.75, -1.0, 1.0)
+		bytes.encode_s16(i * 2, int(value * 32767.0))
+	var stream := AudioStreamWAV.new()
+	stream.format = AudioStreamWAV.FORMAT_16_BITS
+	stream.mix_rate = sample_rate
+	stream.stereo = false
+	stream.data = bytes
+	return stream
 
 
 func _on_game_over(_winner: String) -> void:

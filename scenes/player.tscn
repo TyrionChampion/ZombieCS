@@ -28,6 +28,14 @@ roughness = 0.3
 albedo_color = Color(0.72, 0.48, 0.32, 1)
 roughness = 0.82
 
+[sub_resource type="StandardMaterial3D" id="Material_zombie_hands"]
+albedo_color = Color(0.33, 0.52, 0.25, 1)
+roughness = 0.92
+
+[sub_resource type="StandardMaterial3D" id="Material_zombie_claws"]
+albedo_color = Color(0.12, 0.1, 0.08, 1)
+roughness = 0.72
+
 [node name="Player" type="CharacterBody3D"]
 script = ExtResource("1_player")
 
@@ -73,6 +81,9 @@ surface_material_override/0 = SubResource("Material_flash")
 
 [node name="FireSound" type="AudioStreamPlayer3D" parent="Head/WeaponSystem"]
 bus = &"SFX"
+volume_db = 4.0
+unit_size = 8.0
+max_distance = 90.0
 [node name="ReloadSound" type="AudioStreamPlayer3D" parent="Head/WeaponSystem"]
 bus = &"SFX"
 
@@ -114,6 +125,93 @@ rotation_degrees = Vector3(-8, 0, 14)
 size = Vector3(0.1, 0.1, 0.34)
 use_collision = false
 material = SubResource("Material_skin")
+
+[node name="ZombieFirstPersonHands" type="Node3D" parent="Head"]
+visible = false
+
+[node name="LeftHand" type="Node3D" parent="Head/ZombieFirstPersonHands"]
+position = Vector3(-0.24, -0.25, -0.58)
+rotation_degrees = Vector3(-58, 4, -12)
+
+[node name="Forearm" type="CSGBox3D" parent="Head/ZombieFirstPersonHands/LeftHand"]
+position = Vector3(0, -0.12, 0.12)
+size = Vector3(0.16, 0.42, 0.17)
+use_collision = false
+material = SubResource("Material_zombie_hands")
+
+[node name="Palm" type="CSGSphere3D" parent="Head/ZombieFirstPersonHands/LeftHand"]
+position = Vector3(0, 0.11, -0.08)
+radius = 0.12
+height = 0.18
+radial_segments = 12
+rings = 6
+use_collision = false
+material = SubResource("Material_zombie_hands")
+
+[node name="Claw1" type="CSGBox3D" parent="Head/ZombieFirstPersonHands/LeftHand"]
+position = Vector3(-0.065, 0.16, -0.19)
+rotation_degrees = Vector3(18, 0, -8)
+size = Vector3(0.032, 0.15, 0.035)
+use_collision = false
+material = SubResource("Material_zombie_claws")
+
+[node name="Claw2" type="CSGBox3D" parent="Head/ZombieFirstPersonHands/LeftHand"]
+position = Vector3(0, 0.18, -0.2)
+rotation_degrees = Vector3(18, 0, 0)
+size = Vector3(0.032, 0.16, 0.035)
+use_collision = false
+material = SubResource("Material_zombie_claws")
+
+[node name="Claw3" type="CSGBox3D" parent="Head/ZombieFirstPersonHands/LeftHand"]
+position = Vector3(0.065, 0.16, -0.19)
+rotation_degrees = Vector3(18, 0, 8)
+size = Vector3(0.032, 0.15, 0.035)
+use_collision = false
+material = SubResource("Material_zombie_claws")
+
+[node name="RightHand" type="Node3D" parent="Head/ZombieFirstPersonHands"]
+position = Vector3(0.24, -0.25, -0.58)
+rotation_degrees = Vector3(-58, -4, 12)
+
+[node name="Forearm" type="CSGBox3D" parent="Head/ZombieFirstPersonHands/RightHand"]
+position = Vector3(0, -0.12, 0.12)
+size = Vector3(0.16, 0.42, 0.17)
+use_collision = false
+material = SubResource("Material_zombie_hands")
+
+[node name="Palm" type="CSGSphere3D" parent="Head/ZombieFirstPersonHands/RightHand"]
+position = Vector3(0, 0.11, -0.08)
+radius = 0.12
+height = 0.18
+radial_segments = 12
+rings = 6
+use_collision = false
+material = SubResource("Material_zombie_hands")
+
+[node name="Claw1" type="CSGBox3D" parent="Head/ZombieFirstPersonHands/RightHand"]
+position = Vector3(-0.065, 0.16, -0.19)
+rotation_degrees = Vector3(18, 0, -8)
+size = Vector3(0.032, 0.15, 0.035)
+use_collision = false
+material = SubResource("Material_zombie_claws")
+
+[node name="Claw2" type="CSGBox3D" parent="Head/ZombieFirstPersonHands/RightHand"]
+position = Vector3(0, 0.18, -0.2)
+rotation_degrees = Vector3(18, 0, 0)
+size = Vector3(0.032, 0.16, 0.035)
+use_collision = false
+material = SubResource("Material_zombie_claws")
+
+[node name="Claw3" type="CSGBox3D" parent="Head/ZombieFirstPersonHands/RightHand"]
+position = Vector3(0.065, 0.16, -0.19)
+rotation_degrees = Vector3(18, 0, 8)
+size = Vector3(0.032, 0.15, 0.035)
+use_collision = false
+material = SubResource("Material_zombie_claws")
+
+[node name="ZombieAttackSound" type="AudioStreamPlayer" parent="Head"]
+bus = &"SFX"
+volume_db = 2.0
 
 [node name="HumanModel" parent="." instance=ExtResource("4_human")]
 transform = Transform3D(-1.15, 0, 0, 0, 1.15, 0, 0, 0, -1.15, 0, 0, 0)

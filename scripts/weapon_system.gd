@@ -28,7 +28,7 @@ func _ready() -> void:
 		weapons.assign([WeaponData.ak47(), WeaponData.pistol(), WeaponData.shotgun()])
 	_initialize_ammo()
 	if fire_sound.stream == null:
-		fire_sound.stream = _make_tone(110.0, 0.055, 0.42)
+		fire_sound.stream = _make_gunshot()
 	if reload_sound.stream == null:
 		reload_sound.stream = _make_tone(520.0, 0.1, 0.2)
 	_gun_base_position = gun_model.position
@@ -109,6 +109,14 @@ func shoot() -> bool:
 	return true
 
 
+func play_remote_shot_feedback() -> void:
+	muzzle_flash.visible = true
+	gun_model.position.z += 0.07
+	gun_model.rotation.x += 0.045
+	fire_sound.pitch_scale = randf_range(0.94, 1.06)
+	fire_sound.play()
+
+
 func start_reload() -> void:
 	var weapon := get_current_weapon()
 	if weapon == null or is_reloading or get_reserve_ammo() <= 0 or get_current_ammo() >= weapon.magazine_size:
@@ -153,6 +161,32 @@ func _make_tone(frequency: float, duration: float, volume: float) -> AudioStream
 		var envelope := 1.0 - float(i) / float(sample_count)
 		var value := sin(TAU * frequency * float(i) / float(sample_rate))
 		bytes.encode_s16(i * 2, int(value * envelope * volume * 32767.0))
+	var stream := AudioStreamWAV.new()
+	stream.format = AudioStreamWAV.FORMAT_16_BITS
+	stream.mix_rate = sample_rate
+	stream.stereo = false
+	stream.data = bytes
+	return stream
+
+
+func _make_gunshot() -> AudioStreamWAV:
+	var sample_rate := 44100
+	var duration := 0.18
+	var sample_count := int(sample_rate * duration)
+	var bytes := PackedByteArray()
+	var noise := RandomNumberGenerator.new()
+	noise.seed = 47047
+	bytes.resize(sample_count * 2)
+	for i in range(sample_count):
+		var time := float(i) / float(sample_rate)
+		var body_envelope := exp(-time * 18.0)
+		var crack_envelope := exp(-time * 85.0)
+		var low_body := sin(TAU * (105.0 - time * 120.0) * time)
+		var noise_sample := noise.randf_range(-1.0, 1.0)
+		var value := (low_body * 0.52 + noise_sample * 0.68) * body_envelope
+		value += noise_sample * crack_envelope * 0.55
+		value = clampf(value * 0.9, -1.0, 1.0)
+		bytes.encode_s16(i * 2, int(value * 32767.0))
 	var stream := AudioStreamWAV.new()
 	stream.format = AudioStreamWAV.FORMAT_16_BITS
 	stream.mix_rate = sample_rate

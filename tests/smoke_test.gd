@@ -70,6 +70,9 @@ func _ready() -> void:
 			_check(bool((weapons.call("get_current_weapon") as WeaponData).is_automatic), "AK-47 is not automatic")
 			_check(int(weapons.call("get_current_ammo")) == 30, "Initial AK-47 ammo is incorrect")
 			weapons.call("shoot")
+			var fire_sound := weapons.get_node("FireSound") as AudioStreamPlayer3D
+			_check(fire_sound.stream != null and fire_sound.stream.get_length() >= 0.15, "Gunshot audio is missing or inaudible")
+			_check(fire_sound.playing, "Human gunshot audio did not play")
 			weapons.call("switch_weapon", 1)
 			weapons.call("switch_weapon", 0)
 			_check(int(weapons.call("get_current_ammo")) == 29, "Switching weapons refilled AK-47 ammo")
@@ -99,6 +102,14 @@ func _ready() -> void:
 			var target_direction := (player.global_position - zombie_bot.global_position).normalized()
 			_check(visual_forward.dot(target_direction) > 0.5, "Zombie model is facing away from its target")
 			_check(bool(player.get("is_zombie")), "Zombie bot did not chase and infect a nearby human")
+			var zombie_hands := player.get_node("Head/ZombieFirstPersonHands") as Node3D
+			_check(zombie_hands.visible, "First-person zombie hands are hidden")
+			var right_hand := zombie_hands.get_node("RightHand") as Node3D
+			var hand_start := right_hand.position
+			player.call("_play_zombie_attack_feedback")
+			await get_tree().create_timer(0.12).timeout
+			_check(right_hand.position.distance_to(hand_start) > 0.05, "First-person zombie attack animation did not move")
+			_check((player.get_node("Head/ZombieAttackSound") as AudioStreamPlayer).playing, "Zombie attack sound did not play")
 
 	NetworkManager.leave_game()
 	if failures.is_empty():
