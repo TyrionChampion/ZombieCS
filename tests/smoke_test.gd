@@ -134,6 +134,25 @@ func _ready() -> void:
 			)
 			zombie_bot.call("apply_pending_knockback", 0.016)
 			_check(zombie_bot.velocity.z > 0.0, "Zombie chase velocity overrides weapon knockback")
+			for simulated_shot in range(20):
+				zombie_bot.call(
+					"_on_player_health_changed",
+					int(zombie_bot.get("peer_id")),
+					float(zombie_bot.get("health")) - 1.0,
+					float(zombie_bot.get("max_health")),
+					zombie_bot.global_position + Vector3(0.0, 0.0, -5.0),
+					4.5
+				)
+				for knockback_step in range(6):
+					zombie_bot.call("apply_pending_knockback", 0.016)
+				_check(
+					(zombie_bot.get("_knockback_velocity") as Vector3).length() <= 5.01,
+					"Repeated shots exceeded the knockback speed cap"
+				)
+			_check(
+				float(zombie_bot.get("_knockback_travel")) <= 2.01,
+				"Repeated shots exceeded the knockback travel cap"
+			)
 			zombie_bot.global_position = Vector3(48.0, 0.9, 48.0)
 			zombie_bot.velocity = Vector3.ZERO
 			player.global_position = Vector3(49.5, 0.9, 48.0)
