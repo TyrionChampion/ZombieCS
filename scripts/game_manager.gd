@@ -7,7 +7,7 @@ signal state_changed(new_state: GameState)
 signal countdown_updated(seconds: int)
 signal game_time_updated(seconds: float)
 signal zombie_chosen(peer_id: int, player_name: String)
-signal player_infected(peer_id: int)
+signal player_infected(victim_id: int, attacker_id: int)
 signal player_health_changed(peer_id: int, health: float, max_health: float, hit_pos: Vector3, knockback: float)
 signal player_died(peer_id: int)
 signal player_respawned(peer_id: int, health: float)
@@ -149,10 +149,10 @@ func _server_infect(victim_id: int, attacker_id: int) -> void:
 		return
 	if attacker_node.global_position.distance_to(victim_node.global_position) > 3.2:
 		return
-	_set_zombie_server(victim_id, false)
+	_set_zombie_server(victim_id, false, attacker_id)
 
 
-func _set_zombie_server(peer_id: int, initially_chosen: bool) -> void:
+func _set_zombie_server(peer_id: int, initially_chosen: bool, attacker_id: int = -1) -> void:
 	var info: Dictionary = NetworkManager.players[peer_id].duplicate(true)
 	info["is_zombie"] = true
 	info["alive"] = true
@@ -162,7 +162,7 @@ func _set_zombie_server(peer_id: int, initially_chosen: bool) -> void:
 	if initially_chosen:
 		rpc("_sync_zombie_chosen", peer_id, str(info.get("name", "玩家")))
 	else:
-		rpc("_sync_player_infected", peer_id)
+		rpc("_sync_player_infected", peer_id, attacker_id)
 
 
 func request_weapon_hit(victim_id: int, weapon_index: int, hit_pos: Vector3, pellet_hits: int, attacker_id: int, shot_sequence: int) -> void:
@@ -309,14 +309,14 @@ func _sync_zombie_chosen(peer_id: int, player_name: String) -> void:
 
 
 @rpc("authority", "call_local", "reliable")
-func _sync_player_infected(peer_id: int) -> void:
+func _sync_player_infected(peer_id: int, attacker_id: int) -> void:
 	if NetworkManager.players.has(peer_id):
 		var info: Dictionary = NetworkManager.players[peer_id]
 		info["is_zombie"] = true
 		info["alive"] = true
 		info["health"] = ZOMBIE_HEALTH
 		info["max_health"] = ZOMBIE_HEALTH
-	player_infected.emit(peer_id)
+	player_infected.emit(peer_id, attacker_id)
 
 
 @rpc("authority", "call_local", "reliable")

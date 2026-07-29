@@ -34,22 +34,25 @@ static func pistol() -> WeaponData:
 	w.bullet_trail_color = Color.YELLOW
 	return w
 
-static func rifle() -> WeaponData:
+static func ak47() -> WeaponData:
 	var w := WeaponData.new()
-	w.weapon_name = "M4A1 步枪"
-	w.damage = 18.0
-	w.fire_rate = 8.0
+	w.weapon_name = "AK-47"
+	w.damage = 28.0
+	w.fire_rate = 10.0
 	w.magazine_size = 30
 	w.reserve_ammo = 90
-	w.reload_time = 2.5
-	w.knockback = 4.0
+	w.reload_time = 2.7
+	w.knockback = 4.5
 	w.is_automatic = true
-	w.spread = 0.03
+	w.spread = 0.025
 	w.range = 120.0
 	w.pellet_count = 1
-	w.recoil = 0.024
+	w.recoil = 0.032
 	w.bullet_trail_color = Color.ORANGE
 	return w
+
+static func rifle() -> WeaponData:
+	return ak47()
 
 static func shotgun() -> WeaponData:
 	var w := WeaponData.new()
@@ -71,9 +74,9 @@ static func shotgun() -> WeaponData:
 static func from_index(index: int) -> WeaponData:
 	match index:
 		0:
-			return pistol()
+			return ak47()
 		1:
-			return rifle()
+			return pistol()
 		2:
 			return shotgun()
 		_:

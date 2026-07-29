@@ -183,8 +183,8 @@ func _try_jump_over_obstacle(direction: Vector3) -> void:
 
 
 func _has_line_of_sight(enemy: CharacterBody3D) -> bool:
-	var origin := actor.global_position + Vector3.UP * 1.55
-	var destination := enemy.global_position + Vector3.UP
+	var origin := actor.global_position + Vector3.UP * 1.4
+	var destination := enemy.global_position + Vector3.UP * 0.85
 	var query := PhysicsRayQueryParameters3D.create(origin, destination)
 	query.exclude = [actor.get_rid()]
 	query.collision_mask = 1
@@ -204,7 +204,7 @@ func _aim_at(world_point: Vector3) -> void:
 
 func _fire_at_target(distance: float) -> void:
 	var weapons: Node = actor.get_node("Head/WeaponSystem")
-	var weapon_index := 2 if distance < 10.0 else 1
+	var weapon_index := 2 if distance < 10.0 else 0
 	weapons.call("switch_weapon", weapon_index)
 	if not bool(weapons.call("shoot")):
 		return

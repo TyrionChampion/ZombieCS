@@ -25,7 +25,7 @@ var _gun_base_rotation := Vector3.ZERO
 
 func _ready() -> void:
 	if weapons.is_empty():
-		weapons.assign([WeaponData.pistol(), WeaponData.rifle(), WeaponData.shotgun()])
+		weapons.assign([WeaponData.ak47(), WeaponData.pistol(), WeaponData.shotgun()])
 	_initialize_ammo()
 	if fire_sound.stream == null:
 		fire_sound.stream = _make_tone(110.0, 0.055, 0.42)

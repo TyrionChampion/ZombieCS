@@ -79,7 +79,7 @@ rotation_degrees = Vector3(-35, 45, 0)
 light_color = Color(1, 0.96, 0.88, 1)
 light_energy = 1.35
 shadow_enabled = true
-directional_shadow_max_distance = 80.0
+directional_shadow_max_distance = 150.0
 
 [node name="FillLight" type="DirectionalLight3D" parent="."]
 rotation_degrees = Vector3(45, -135, 0)
@@ -89,31 +89,39 @@ light_energy = 0.22
 [node name="WorldEnvironment" type="WorldEnvironment" parent="."]
 environment = SubResource("Environment_1")
 
+[node name="CountdownAnnouncer" type="AudioStreamPlayer" parent="."]
+bus = &"SFX"
+volume_db = -1.0
+
+[node name="ZombieRevealSound" type="AudioStreamPlayer" parent="."]
+bus = &"SFX"
+volume_db = -3.0
+
 [node name="Ground" type="CSGBox3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.5, 0)
-size = Vector3(50, 1, 50)
+size = Vector3(120, 1, 120)
 use_collision = true
 material = SubResource("Mat_ground")
 
 [node name="Walls" type="Node3D" parent="."]
 [node name="WallNorth" type="CSGBox3D" parent="Walls"]
-transform = Transform3D(1, 0, 0, 0, 2, 0, 0, 0, 1, 0, 2, -25)
-size = Vector3(50, 4, 1)
+transform = Transform3D(1, 0, 0, 0, 2, 0, 0, 0, 1, 0, 2, -60)
+size = Vector3(120, 4, 1)
 use_collision = true
 material = SubResource("Mat_sandstone")
 [node name="WallSouth" type="CSGBox3D" parent="Walls"]
-transform = Transform3D(1, 0, 0, 0, 2, 0, 0, 0, 1, 0, 2, 25)
-size = Vector3(50, 4, 1)
+transform = Transform3D(1, 0, 0, 0, 2, 0, 0, 0, 1, 0, 2, 60)
+size = Vector3(120, 4, 1)
 use_collision = true
 material = SubResource("Mat_sandstone")
 [node name="WallEast" type="CSGBox3D" parent="Walls"]
-transform = Transform3D(1, 0, 0, 0, 2, 0, 0, 0, 1, 25, 2, 0)
-size = Vector3(1, 4, 50)
+transform = Transform3D(1, 0, 0, 0, 2, 0, 0, 0, 1, 60, 2, 0)
+size = Vector3(1, 4, 120)
 use_collision = true
 material = SubResource("Mat_sandstone")
 [node name="WallWest" type="CSGBox3D" parent="Walls"]
-transform = Transform3D(1, 0, 0, 0, 2, 0, 0, 0, 1, -25, 2, 0)
-size = Vector3(1, 4, 50)
+transform = Transform3D(1, 0, 0, 0, 2, 0, 0, 0, 1, -60, 2, 0)
+size = Vector3(1, 4, 120)
 use_collision = true
 material = SubResource("Mat_sandstone")
 
@@ -266,6 +274,20 @@ offset_bottom = 140.0
 grow_horizontal = 2
 horizontal_alignment = 1
 vertical_alignment = 1
+[node name="KillFeedMargin" type="MarginContainer" parent="CanvasLayer/HUD"]
+layout_mode = 1
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -430.0
+offset_top = 64.0
+offset_right = -16.0
+offset_bottom = 340.0
+grow_horizontal = 0
+mouse_filter = 2
+[node name="KillFeed" type="VBoxContainer" parent="CanvasLayer/HUD/KillFeedMargin"]
+layout_mode = 2
+theme_override_constants/separation = 6
 [node name="GameOverPanel" type="Panel" parent="CanvasLayer/HUD"]
 visible = false
 layout_mode = 1

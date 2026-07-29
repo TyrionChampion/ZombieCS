@@ -3,24 +3,12 @@
 [ext_resource type="Script" path="res://scripts/player_controller.gd" id="1_player"]
 [ext_resource type="Script" path="res://scripts/weapon_system.gd" id="2_weapon"]
 [ext_resource type="Script" path="res://scripts/bot_controller.gd" id="3_bot"]
+[ext_resource type="PackedScene" path="res://assets/characters/human_shaun.gltf" id="4_human"]
+[ext_resource type="PackedScene" path="res://assets/characters/zombie_basic.gltf" id="5_zombie"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape_1"]
 radius = 0.5
 height = 1.8
-
-[sub_resource type="CapsuleMesh" id="CapsuleMesh_human"]
-radius = 0.5
-height = 1.8
-
-[sub_resource type="StandardMaterial3D" id="Material_human"]
-albedo_color = Color(0.2, 0.5, 0.8, 1)
-
-[sub_resource type="CapsuleMesh" id="CapsuleMesh_zombie"]
-radius = 0.5
-height = 1.8
-
-[sub_resource type="StandardMaterial3D" id="Material_zombie"]
-albedo_color = Color(0.8, 0.2, 0.2, 1)
 
 [sub_resource type="StandardMaterial3D" id="Material_flash"]
 albedo_color = Color(1, 0.9, 0.2, 1)
@@ -47,7 +35,7 @@ script = ExtResource("1_player")
 script = ExtResource("3_bot")
 
 [node name="NavigationAgent3D" type="NavigationAgent3D" parent="."]
-path_desired_distance = 0.7
+path_desired_distance = 1.1
 target_desired_distance = 1.4
 radius = 0.55
 height = 1.8
@@ -92,17 +80,24 @@ bus = &"SFX"
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.15, -0.2, -0.4)
 
 [node name="GunBody" type="CSGBox3D" parent="Head/WeaponSystem/GunModel"]
-size = Vector3(0.12, 0.12, 0.5)
+size = Vector3(0.14, 0.14, 0.62)
 use_collision = false
 material = SubResource("Material_gun")
 [node name="GunBarrel" type="CSGBox3D" parent="Head/WeaponSystem/GunModel"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.01, -0.25)
-size = Vector3(0.06, 0.07, 0.35)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.01, -0.38)
+size = Vector3(0.065, 0.07, 0.48)
 use_collision = false
 material = SubResource("Material_gun")
 [node name="GunGrip" type="CSGBox3D" parent="Head/WeaponSystem/GunModel"]
 transform = Transform3D(1, 0, 0, 0, 0.7, -0.7, 0, 0.7, 0.7, 0, -0.07, 0.15)
 size = Vector3(0.09, 0.2, 0.07)
+use_collision = false
+material = SubResource("Material_gun")
+
+[node name="GunMagazine" type="CSGBox3D" parent="Head/WeaponSystem/GunModel"]
+position = Vector3(0, -0.13, -0.08)
+rotation_degrees = Vector3(-12, 0, 0)
+size = Vector3(0.11, 0.28, 0.16)
 use_collision = false
 material = SubResource("Material_gun")
 
@@ -120,13 +115,9 @@ size = Vector3(0.1, 0.1, 0.34)
 use_collision = false
 material = SubResource("Material_skin")
 
-[node name="BodyMesh" type="MeshInstance3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.9, 0)
-mesh = SubResource("CapsuleMesh_human")
-surface_material_override/0 = SubResource("Material_human")
+[node name="HumanModel" parent="." instance=ExtResource("4_human")]
+transform = Transform3D(1.15, 0, 0, 0, 1.15, 0, 0, 0, 1.15, 0, 0, 0)
 
-[node name="ZombieMesh" type="MeshInstance3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.9, 0)
-mesh = SubResource("CapsuleMesh_zombie")
-surface_material_override/0 = SubResource("Material_zombie")
+[node name="ZombieModel" parent="." instance=ExtResource("5_zombie")]
+transform = Transform3D(1.3, 0, 0, 0, 1.3, 0, 0, 0, 1.3, 0, 0, 0)
 visible = false

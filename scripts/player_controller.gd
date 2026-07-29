@@ -29,11 +29,13 @@ var _shot_sequence := 0
 
 @onready var camera: Camera3D = $Head/Camera3D
 @onready var head: Node3D = $Head
-@onready var body_mesh: MeshInstance3D = $BodyMesh
-@onready var zombie_mesh: MeshInstance3D = $ZombieMesh
+@onready var human_model: Node3D = $HumanModel
+@onready var zombie_model: Node3D = $ZombieModel
 @onready var attack_ray: RayCast3D = $Head/AttackRay
 @onready var weapon_system: Node3D = $Head/WeaponSystem
 @onready var bot_controller: Node = $BotController
+var _human_animation: AnimationPlayer
+var _zombie_animation: AnimationPlayer
 
 
 func _ready() -> void:
@@ -59,7 +61,17 @@ func _ready() -> void:
 	GameManager.player_reset.connect(_on_player_reset)
 	GameManager.game_over.connect(_on_game_over)
 	weapon_system.connect("shot_fired", _on_shot_fired)
+	var human_players := human_model.find_children("*", "AnimationPlayer", true, false)
+	var zombie_players := zombie_model.find_children("*", "AnimationPlayer", true, false)
+	if not human_players.is_empty():
+		_human_animation = human_players[0] as AnimationPlayer
+	if not zombie_players.is_empty():
+		_zombie_animation = zombie_players[0] as AnimationPlayer
 	_update_appearance()
+
+
+func _process(_delta: float) -> void:
+	_update_model_animation()
 
 
 func _input(event: InputEvent) -> void:
@@ -262,7 +274,7 @@ func _on_zombie_chosen(pid: int, _player_name: String) -> void:
 		set_zombie(true)
 
 
-func _on_player_infected(pid: int) -> void:
+func _on_player_infected(pid: int, _attacker_id: int) -> void:
 	if pid == peer_id:
 		set_zombie(true)
 
@@ -331,9 +343,27 @@ func set_zombie(value: bool) -> void:
 func _update_appearance() -> void:
 	if not is_node_ready():
 		return
-	body_mesh.visible = not is_zombie
-	zombie_mesh.visible = is_zombie
-	weapon_system.visible = not is_zombie
+	var show_third_person := is_bot or not is_multiplayer_authority()
+	human_model.visible = show_third_person and not is_zombie
+	zombie_model.visible = show_third_person and is_zombie
+	weapon_system.visible = not is_zombie and is_multiplayer_authority() and not is_bot
+
+
+func _update_model_animation() -> void:
+	var animation_player := _zombie_animation if is_zombie else _human_animation
+	if animation_player == null:
+		return
+	var horizontal_speed := Vector2(velocity.x, velocity.z).length()
+	var requested := "Idle"
+	if horizontal_speed > 0.35:
+		if is_zombie:
+			requested = "Run_Arms" if horizontal_speed > 5.5 else "Walk"
+		else:
+			requested = "Run_Gun" if horizontal_speed > 6.0 else "Walk_Gun"
+	elif not is_zombie:
+		requested = "Idle_Gun"
+	if animation_player.has_animation(requested) and animation_player.current_animation != requested:
+		animation_player.play(requested, 0.18)
 
 
 func _on_game_over(_winner: String) -> void:

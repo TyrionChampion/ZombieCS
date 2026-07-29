@@ -10,10 +10,13 @@ extends Node3D
 @onready var weapon_label: Label = $CanvasLayer/HUD/WeaponLabel
 @onready var ammo_label: Label = $CanvasLayer/HUD/AmmoLabel
 @onready var notification_label: Label = $CanvasLayer/HUD/NotificationLabel
+@onready var kill_feed: VBoxContainer = $CanvasLayer/HUD/KillFeedMargin/KillFeed
 @onready var crosshair: Label = $CanvasLayer/HUD/Crosshair
 @onready var game_over_panel: Panel = $CanvasLayer/HUD/GameOverPanel
 @onready var game_over_label: Label = $CanvasLayer/HUD/GameOverPanel/GameOverLabel
 @onready var restart_button: Button = $CanvasLayer/HUD/GameOverPanel/RestartButton
+@onready var countdown_announcer: AudioStreamPlayer = $CountdownAnnouncer
+@onready var zombie_reveal_sound: AudioStreamPlayer = $ZombieRevealSound
 
 var player_scene: PackedScene = preload("res://scenes/player.tscn")
 var local_player: CharacterBody3D
@@ -27,18 +30,19 @@ var _plaster_material: Material
 var _site_a_material: Material
 var _site_b_material: Material
 
-const MODULE_SOCKETS := [
-	Vector3(-13.5, 0.0, -13.0),
-	Vector3(13.5, 0.0, -13.0),
-	Vector3(-13.5, 0.0, 13.0),
-	Vector3(13.5, 0.0, 13.0),
+const COUNTDOWN_VOICES: Array[AudioStream] = [
+	preload("res://assets/audio/countdown_voice/GO.wav"),
+	preload("res://assets/audio/countdown_voice/1.wav"),
+	preload("res://assets/audio/countdown_voice/2.wav"),
+	preload("res://assets/audio/countdown_voice/3.wav"),
+	preload("res://assets/audio/countdown_voice/4.wav"),
+	preload("res://assets/audio/countdown_voice/5.wav"),
 ]
-const MODULE_POOLS := [
-	[5, 8],
-	[0, 1, 6, 9],
-	[4, 10, 11],
-	[2, 3, 7],
-]
+const ZOMBIE_REVEAL_AUDIO: AudioStream = preload("res://assets/audio/zombie_reveal.wav")
+
+const MAP_HALF_EXTENT := 60
+const MODULE_GRID_RADIUS := 2
+const MODULE_SPACING := 20.0
 
 # Every module stays inside an 8 x 8 metre socket. The outer ring and the
 # north/south/east/west roads remain open, so every layout is connected.
@@ -76,6 +80,7 @@ func _ready() -> void:
 	GameManager.map_seed_changed.connect(_on_map_seed_changed)
 	restart_button.pressed.connect(_on_restart_pressed)
 	restart_button.visible = NetworkManager.is_host
+	zombie_reveal_sound.stream = ZOMBIE_REVEAL_AUDIO
 	_prepare_procedural_map()
 	regenerate_map(GameManager.map_seed)
 
@@ -110,12 +115,13 @@ func regenerate_map(map_seed: int) -> void:
 
 	var rng := RandomNumberGenerator.new()
 	rng.seed = map_seed
-	for socket_index in range(MODULE_SOCKETS.size()):
-		var pool: Array = MODULE_POOLS[socket_index]
-		var module_id: int = int(pool[rng.randi_range(0, pool.size() - 1)])
-		current_module_ids.append(module_id)
-		var turns := rng.randi_range(0, 3)
-		_create_module(module_id, MODULE_SOCKETS[socket_index], turns)
+	for grid_z in range(-MODULE_GRID_RADIUS, MODULE_GRID_RADIUS + 1):
+		for grid_x in range(-MODULE_GRID_RADIUS, MODULE_GRID_RADIUS + 1):
+			var module_id := rng.randi_range(0, MAP_MODULES.size() - 1)
+			current_module_ids.append(module_id)
+			var turns := rng.randi_range(0, 3)
+			var socket := Vector3(grid_x * MODULE_SPACING, 0.0, grid_z * MODULE_SPACING)
+			_create_module(module_id, socket, turns)
 
 	_create_fixed_landmarks()
 	_update_spawn_points(rng)
@@ -164,12 +170,12 @@ func _create_fixed_landmarks() -> void:
 		_create_box(_procedural_map, "wall", gate_data[0], gate_data[1])
 
 	# Low platforms remain walkable in the grid and make both sites visible at distance.
-	_create_box(_procedural_map, "plaster", Vector3(-18.0, 0.15, 18.0), Vector3(7.0, 0.3, 7.0))
-	_create_box(_procedural_map, "plaster", Vector3(18.0, 0.15, -18.0), Vector3(7.0, 0.3, 7.0))
-	_create_site_disc(Vector3(-18.0, 0.34, 18.0), _site_a_material)
-	_create_site_disc(Vector3(18.0, 0.34, -18.0), _site_b_material)
-	_create_site_label("A", Vector3(-18.0, 3.1, 18.0), Color(1.0, 0.2, 0.12))
-	_create_site_label("B", Vector3(18.0, 3.1, -18.0), Color(0.15, 0.55, 1.0))
+	_create_box(_procedural_map, "plaster", Vector3(-42.0, 0.15, 42.0), Vector3(9.0, 0.3, 9.0))
+	_create_box(_procedural_map, "plaster", Vector3(42.0, 0.15, -42.0), Vector3(9.0, 0.3, 9.0))
+	_create_site_disc(Vector3(-42.0, 0.34, 42.0), _site_a_material)
+	_create_site_disc(Vector3(42.0, 0.34, -42.0), _site_b_material)
+	_create_site_label("A", Vector3(-42.0, 3.1, 42.0), Color(1.0, 0.2, 0.12))
+	_create_site_label("B", Vector3(42.0, 3.1, -42.0), Color(0.15, 0.55, 1.0))
 	_create_site_label("MID", Vector3(0.0, 3.8, 0.0), Color(1.0, 0.82, 0.2), 64)
 
 
@@ -197,14 +203,14 @@ func _create_site_label(label_text: String, label_position: Vector3, color: Colo
 
 func _update_spawn_points(rng: RandomNumberGenerator) -> void:
 	var candidates := [
-		Vector3(-21, 2, -20), Vector3(-17, 2, -21), Vector3(-9, 2, -21),
-		Vector3(0, 2, -21), Vector3(9, 2, -21), Vector3(17, 2, -21),
-		Vector3(21, 2, -20), Vector3(21, 2, -10), Vector3(21, 2, 0),
-		Vector3(21, 2, 10), Vector3(21, 2, 20), Vector3(12, 2, 21),
-		Vector3(4, 2, 21), Vector3(-4, 2, 21), Vector3(-12, 2, 21),
-		Vector3(-21, 2, 20), Vector3(-21, 2, 10), Vector3(-21, 2, 0),
-		Vector3(-21, 2, -10), Vector3(0, 2, -7), Vector3(0, 2, 7),
-		Vector3(-7, 2, 0), Vector3(7, 2, 0), Vector3(0, 2, 0),
+		Vector3(-54, 2, -52), Vector3(-36, 2, -54), Vector3(-18, 2, -54),
+		Vector3(0, 2, -54), Vector3(18, 2, -54), Vector3(36, 2, -54),
+		Vector3(54, 2, -52), Vector3(54, 2, -30), Vector3(54, 2, 0),
+		Vector3(54, 2, 30), Vector3(54, 2, 52), Vector3(36, 2, 54),
+		Vector3(18, 2, 54), Vector3(0, 2, 54), Vector3(-18, 2, 54),
+		Vector3(-36, 2, 54), Vector3(-54, 2, 52), Vector3(-54, 2, 30),
+		Vector3(-54, 2, 0), Vector3(-54, 2, -30), Vector3(0, 2, -30),
+		Vector3(0, 2, 30), Vector3(-30, 2, 0), Vector3(30, 2, 0),
 	]
 	# A deterministic shuffle prevents one team from always receiving the same landmark.
 	for i in range(candidates.size() - 1, 0, -1):
@@ -227,8 +233,8 @@ func _on_map_seed_changed(map_seed: int) -> void:
 
 func _build_navigation_grid() -> void:
 	# CSG 自动烘焙在无界面服务器不可用，因此从碰撞盒生成确定性的平面导航网格。
-	const MIN_COORD := -24
-	const MAX_COORD := 24
+	const MIN_COORD := -59
+	const MAX_COORD := 59
 	const GRID_SIZE := MAX_COORD - MIN_COORD + 1
 	var navigation_mesh := NavigationMesh.new()
 	navigation_mesh.agent_height = 1.8
@@ -329,8 +335,15 @@ func _on_state_changed(new_state: int) -> void:
 
 
 func _on_countdown(seconds: int) -> void:
-	countdown_label.text = str(seconds) if seconds > 0 else "GO!"
+	countdown_label.text = "僵尸将在 %d 秒后出现" % seconds if seconds > 0 else "僵尸出现！"
+	countdown_label.modulate = Color(1.0, 0.78, 0.25) if seconds > 0 else Color(1.0, 0.18, 0.12)
 	countdown_label.visible = true
+	countdown_label.scale = Vector2(1.35, 1.35)
+	var pulse := create_tween()
+	pulse.tween_property(countdown_label, "scale", Vector2.ONE, 0.22)
+	if seconds >= 0 and seconds < COUNTDOWN_VOICES.size():
+		countdown_announcer.stream = COUNTDOWN_VOICES[seconds]
+		countdown_announcer.play()
 	if seconds == 0:
 		await get_tree().create_timer(0.8).timeout
 		countdown_label.visible = false
@@ -342,6 +355,7 @@ func _on_time(seconds: float) -> void:
 
 
 func _on_zombie_chosen(peer_id: int, player_name: String) -> void:
+	_play_zombie_reveal_sound()
 	if peer_id == multiplayer.get_unique_id():
 		_show_notification("你成为了初始僵尸！感染所有人类！")
 	else:
@@ -349,10 +363,60 @@ func _on_zombie_chosen(peer_id: int, player_name: String) -> void:
 	_refresh_local_hud()
 
 
-func _on_player_infected(peer_id: int) -> void:
+func _play_zombie_reveal_sound() -> void:
+	await get_tree().create_timer(0.55).timeout
+	zombie_reveal_sound.play()
+
+
+func _on_player_infected(peer_id: int, attacker_id: int) -> void:
 	var info: Dictionary = NetworkManager.players.get(peer_id, {})
+	var attacker_info: Dictionary = NetworkManager.players.get(attacker_id, {})
+	_add_kill_feed_entry(
+		str(attacker_info.get("name", "僵尸")),
+		str(info.get("name", "玩家"))
+	)
 	_show_notification("🦠 %s 被感染！" % str(info.get("name", "玩家")))
 	_refresh_local_hud()
+
+
+func _add_kill_feed_entry(attacker_name: String, victim_name: String) -> void:
+	var row := PanelContainer.new()
+	row.custom_minimum_size = Vector2(390.0, 36.0)
+	var panel_style := StyleBoxFlat.new()
+	panel_style.bg_color = Color(0.035, 0.045, 0.055, 0.88)
+	panel_style.border_width_left = 4
+	panel_style.border_color = Color(0.82, 0.12, 0.1, 1.0)
+	panel_style.corner_radius_top_left = 4
+	panel_style.corner_radius_top_right = 4
+	panel_style.corner_radius_bottom_left = 4
+	panel_style.corner_radius_bottom_right = 4
+	panel_style.content_margin_left = 12.0
+	panel_style.content_margin_right = 12.0
+	row.add_theme_stylebox_override("panel", panel_style)
+
+	var label := Label.new()
+	label.text = "%s   ☣ 感染   %s" % [attacker_name, victim_name]
+	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	label.add_theme_color_override("font_color", Color(1.0, 0.88, 0.82))
+	label.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0.85))
+	label.add_theme_constant_override("shadow_offset_x", 1)
+	label.add_theme_constant_override("shadow_offset_y", 1)
+	label.add_theme_font_size_override("font_size", 18)
+	row.add_child(label)
+	kill_feed.add_child(row)
+	kill_feed.move_child(row, 0)
+	while kill_feed.get_child_count() > 6:
+		kill_feed.get_child(kill_feed.get_child_count() - 1).queue_free()
+
+	await get_tree().create_timer(5.0).timeout
+	if not is_instance_valid(row):
+		return
+	var fade := create_tween()
+	fade.tween_property(row, "modulate:a", 0.0, 0.45)
+	await fade.finished
+	if is_instance_valid(row):
+		row.queue_free()
 
 
 func _on_player_respawned(peer_id: int, _health: float) -> void:
