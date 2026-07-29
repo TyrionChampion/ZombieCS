@@ -177,6 +177,8 @@ func _try_jump_over_obstacle(direction: Vector3) -> void:
 	var high_query := PhysicsRayQueryParameters3D.create(high_origin, high_origin + direction * 1.1)
 	low_query.exclude = [actor.get_rid()]
 	high_query.exclude = [actor.get_rid()]
+	low_query.collision_mask = 1
+	high_query.collision_mask = 1
 	if not actor.get_world_3d().direct_space_state.intersect_ray(low_query).is_empty() \
 			and actor.get_world_3d().direct_space_state.intersect_ray(high_query).is_empty():
 		actor.velocity.y = float(actor.get("zombie_jump_velocity" if bool(actor.get("is_zombie")) else "jump_velocity"))
@@ -187,7 +189,7 @@ func _has_line_of_sight(enemy: CharacterBody3D) -> bool:
 	var destination := enemy.global_position + Vector3.UP * 0.85
 	var query := PhysicsRayQueryParameters3D.create(origin, destination)
 	query.exclude = [actor.get_rid()]
-	query.collision_mask = 1
+	query.collision_mask = 3
 	var result := actor.get_world_3d().direct_space_state.intersect_ray(query)
 	return not result.is_empty() and result.get("collider") == enemy
 
@@ -199,7 +201,7 @@ func _aim_at(world_point: Vector3) -> void:
 	var desired_yaw := atan2(-direction.x, -direction.z)
 	actor.rotation.y = lerp_angle(actor.rotation.y, desired_yaw, 0.22)
 	var head: Node3D = actor.get_node("Head")
-	head.rotation.x = lerp_angle(head.rotation.x, -asin(clampf(direction.y, -1.0, 1.0)), 0.28)
+	head.rotation.x = lerp_angle(head.rotation.x, asin(clampf(direction.y, -1.0, 1.0)), 0.28)
 
 
 func _fire_at_target(distance: float) -> void:

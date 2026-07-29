@@ -56,6 +56,8 @@ func _ready() -> void:
 		if player != null:
 			_check(player.has_node("HumanModel"), "Human character model is missing")
 			_check(player.has_node("ZombieModel"), "Zombie character model is missing")
+			_check(player.collision_layer == 2 and player.collision_mask == 1, "Players still physically collide with each other")
+			_check((player.get_node("Head/AttackRay") as RayCast3D).collision_mask == 3, "Zombie attacks cannot detect player layer")
 			_check(
 				not player.get_node("HumanModel").find_children("*", "AnimationPlayer", true, false).is_empty(),
 				"Human character animations are missing"
@@ -69,7 +71,10 @@ func _ready() -> void:
 			_check(str(weapons.call("get_current_weapon_name")) == "AK-47", "AK-47 is not the default weapon")
 			_check(bool((weapons.call("get_current_weapon") as WeaponData).is_automatic), "AK-47 is not automatic")
 			_check(int(weapons.call("get_current_ammo")) == 30, "Initial AK-47 ammo is incorrect")
+			var player_head := player.get_node("Head") as Node3D
+			player_head.rotation.x = 0.0
 			weapons.call("shoot")
+			_check(player_head.rotation.x > 0.0, "Weapon recoil pushes the crosshair downward")
 			var fire_sound := weapons.get_node("FireSound") as AudioStreamPlayer3D
 			_check(fire_sound.stream != null and fire_sound.stream.get_length() >= 0.15, "Gunshot audio is missing or inaudible")
 			_check(fire_sound.playing, "Human gunshot audio did not play")
@@ -78,9 +83,16 @@ func _ready() -> void:
 			_check(int(weapons.call("get_current_ammo")) == 29, "Switching weapons refilled AK-47 ammo")
 		await get_tree().create_timer(1.5).timeout
 		var moved_bot := false
+		var bot_vertical_aim_checked := false
 		for node: Node in world.get_tree().get_nodes_in_group("players"):
 			var bot_id := int(node.get("peer_id"))
 			if bool(node.get("is_bot")) and bot_positions.has(bot_id):
+				if not bot_vertical_aim_checked:
+					var bot_head := node.get_node("Head") as Node3D
+					bot_head.rotation.x = 0.0
+					node.get_node("BotController").call("_aim_at", node.global_position + Vector3(0.0, 5.0, -10.0))
+					_check(bot_head.rotation.x > 0.0, "Bot vertical aim direction is inverted")
+					bot_vertical_aim_checked = true
 				var current_xz := Vector2(node.global_position.x, node.global_position.z)
 				if current_xz.distance_to(bot_positions[bot_id]) > 0.25:
 					moved_bot = true

@@ -37,6 +37,8 @@ albedo_color = Color(0.12, 0.1, 0.08, 1)
 roughness = 0.72
 
 [node name="Player" type="CharacterBody3D"]
+collision_layer = 2
+collision_mask = 1
 script = ExtResource("1_player")
 
 [node name="BotController" type="Node" parent="."]
@@ -61,11 +63,11 @@ current = false
 
 [node name="AttackRay" type="RayCast3D" parent="Head"]
 target_position = Vector3(0, 0, -2.5)
-collision_mask = 1
+collision_mask = 3
 
 [node name="ShootRay" type="RayCast3D" parent="Head"]
 target_position = Vector3(0, 0, -100)
-collision_mask = 1
+collision_mask = 3
 
 [node name="WeaponSystem" type="Node3D" parent="Head"]
 script = ExtResource("2_weapon")

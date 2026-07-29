@@ -211,7 +211,7 @@ func _server_weapon_hit(victim_id: int, weapon_index: int, hit_pos: Vector3, pel
 		hit_pos
 	)
 	query.exclude = [attacker_node.get_rid()]
-	query.collision_mask = 1
+	query.collision_mask = 3
 	var ray_result := attacker_node.get_world_3d().direct_space_state.intersect_ray(query)
 	if ray_result.is_empty() or ray_result.get("collider") != victim_node:
 		return

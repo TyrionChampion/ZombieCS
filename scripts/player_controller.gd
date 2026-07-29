@@ -204,7 +204,7 @@ func _human_shoot() -> void:
 		var origin := camera.global_position
 		var query := PhysicsRayQueryParameters3D.create(origin, origin + direction * weapon.range)
 		query.exclude = [get_rid()]
-		query.collision_mask = 1
+		query.collision_mask = 3
 		var result := space.intersect_ray(query)
 		if result.is_empty():
 			if pellet_index == 0:
@@ -242,7 +242,7 @@ func _on_shot_fired() -> void:
 	if weapon == null:
 		return
 	head.rotation.x = clampf(
-		head.rotation.x - weapon.recoil,
+		head.rotation.x + weapon.recoil,
 		deg_to_rad(-89.0),
 		deg_to_rad(89.0)
 	)
